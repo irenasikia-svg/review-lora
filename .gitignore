@@ -1,0 +1,6 @@
+.venv/
+adapters*/
+runs/*/adapters*/
+data/raw/
+logs/
+__pycache__/

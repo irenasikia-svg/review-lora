@@ -1,0 +1,31 @@
+# LoRA 训练配置（mlx_lm lora -c lora_config.yaml）
+model: mlx-community/Qwen3-1.7B-bf16
+train: true
+data: data/sft
+adapter_path: adapters
+
+fine_tune_type: lora
+# 只在"答案"部分算损失：提示词每条都一样，没必要让模型学着复述它
+mask_prompt: true
+# 给全部 28 层加 LoRA
+num_layers: -1
+lora_parameters:
+  # rank：LoRA 小矩阵的宽度。越大能学的越多，但参数和过拟合风险也越大
+  rank: 16
+  scale: 20.0
+  dropout: 0.05
+
+optimizer: adamw
+learning_rate: 1.0e-4
+batch_size: 8
+# 第一版训 3 轮（720 步），验证损失在第 1 轮末最低、之后过拟合，所以第二版只训 2 轮
+iters: 480
+# 第二版提示词变长（约 780 token），留足余量
+max_seq_length: 1280
+grad_checkpoint: true
+
+steps_per_report: 10
+steps_per_eval: 40
+val_batches: -1
+save_every: 40
+seed: 42

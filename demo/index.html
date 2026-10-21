@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>评论抽取演示</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --surface-2: #f0eee9;
+    --text: #1d1c1a;
+    --muted: #6d6a63;
+    --border: #e2dfd8;
+    --accent: #3b5bdb;
+    --accent-soft: #e7ecff;
+    --pos: #1f8a4c;
+    --pos-soft: #e3f4ea;
+    --neg: #c2412d;
+    --neg-soft: #fbe7e3;
+    --warn: #a15c00;
+    --warn-soft: #fdf0d9;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151513;
+      --surface: #1e1e1b;
+      --surface-2: #272724;
+      --text: #ecebe6;
+      --muted: #9c998f;
+      --border: #34332f;
+      --accent: #8ea6ff;
+      --accent-soft: #252c47;
+      --pos: #5cc98a;
+      --pos-soft: #1b3326;
+      --neg: #f08470;
+      --neg-soft: #3a211c;
+      --warn: #f0b35a;
+      --warn-soft: #3a2c16;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: .01em; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip-static {
+    font-size: 12px; color: var(--muted); background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px;
+  }
+  .input-card { margin-top: 24px; }
+  textarea {
+    width: 100%; min-height: 88px; resize: vertical; padding: 12px 14px;
+    font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; outline: none;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .examples span { font-size: 12px; color: var(--muted); margin-right: 2px; align-self: center; }
+  .example {
+    font: inherit; font-size: 13px; color: var(--text); background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; cursor: pointer;
+    max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .example:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary {
+    font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: none;
+    border-radius: 10px; padding: 9px 22px; cursor: pointer;
+  }
+  @media (prefers-color-scheme: dark) { button.primary { color: #111; } }
+  button.primary:disabled { opacity: .55; cursor: wait; }
+  .hint { font-size: 12px; color: var(--muted); }
+
+  .review { margin-top: 20px; font-size: 17px; line-height: 2; }
+  .review .label { font-size: 12px; color: var(--muted); display: block; line-height: 1.4; margin-bottom: 6px; }
+  mark { border-radius: 4px; padding: 1px 3px; color: inherit; }
+  mark.pos { background: var(--pos-soft); box-shadow: inset 0 -2px 0 var(--pos); }
+  mark.neg { background: var(--neg-soft); box-shadow: inset 0 -2px 0 var(--neg); }
+  mark sup { font-size: 10px; color: var(--muted); margin-left: 2px; }
+
+  .results { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 760px) { .results { grid-template-columns: 1fr; } }
+  .result h2 { font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .result h2 small { font-weight: 400; color: var(--muted); font-size: 12px; }
+  .result.lora { border-color: var(--accent); }
+  .status { display: flex; align-items: center; gap: 8px; margin: 14px 0 12px; flex-wrap: wrap; }
+  .badge { font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; }
+  .badge.ok { background: var(--pos-soft); color: var(--pos); }
+  .badge.bad { background: var(--warn-soft); color: var(--warn); }
+  .badge.pos { background: var(--pos-soft); color: var(--pos); }
+  .badge.neg { background: var(--neg-soft); color: var(--neg); }
+  .ms { margin-left: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .problems { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: 13px; }
+  .problems ul { margin: 4px 0 0; padding-left: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: top; }
+  td.aspect { white-space: nowrap; font-weight: 600; width: 1%; }
+  td.senti { white-space: nowrap; width: 1%; text-align: right; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+  .dot.pos { background: var(--pos); } .dot.neg { background: var(--neg); }
+  .empty { color: var(--muted); font-size: 13px; padding: 8px 0; border-top: 1px solid var(--border); }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+  pre {
+    margin: 8px 0 0; padding: 10px 12px; background: var(--surface-2); border-radius: 8px;
+    font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; white-space: pre-wrap; word-break: break-all;
+  }
+  .placeholder { color: var(--muted); font-size: 14px; padding: 28px 0; text-align: center; }
+  .legend { margin-top: 24px; }
+  .legend summary { font-size: 14px; color: var(--text); font-weight: 600; }
+  .legend dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 14px 0 0; font-size: 13px; }
+  .legend dt { font-weight: 600; }
+  .legend dd { margin: 0; color: var(--muted); }
+  .error { margin-top: 16px; color: var(--neg); font-size: 14px; }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>评论抽取 · LoRA 微调演示</h1>
+    <p>输入一条中文商品评论，对比同一个小模型在微调前后的输出。</p>
+    <div class="meta" id="meta"><span class="chip-static">加载中…</span></div>
+  </header>
+
+  <section class="card input-card">
+    <textarea id="text" placeholder="例如：屏幕很清晰，但电池两天就没电了，客服也不理人" maxlength="300"></textarea>
+    <div class="row">
+      <span class="hint">⌘ / Ctrl + Enter 也可以提交 · 最多 300 字</span>
+      <button class="primary" id="run">分析</button>
+    </div>
+    <div class="examples" id="examples"><span>试试：</span></div>
+    <div class="review" id="review" hidden></div>
+    <div class="error" id="error" hidden></div>
+  </section>
+
+  <section class="results">
+    <article class="card result" id="original">
+      <h2>原始模型 <small>Qwen3-1.7B，未微调</small></h2>
+      <div class="placeholder">结果会显示在这里</div>
+    </article>
+    <article class="card result lora" id="lora">
+      <h2>LoRA 微调后 <small>同一个模型 + 70MB 适配器</small></h2>
+      <div class="placeholder">结果会显示在这里</div>
+    </article>
+  </section>
+
+  <details class="card legend">
+    <summary>方面列表（模型只能从这里选）</summary>
+    <dl id="aspects"></dl>
+  </details>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sentiClass = (s) => (s === "正面" ? "pos" : "neg");
+
+async function loadInfo() {
+  const info = await fetch("/api/info").then((r) => r.json());
+  $("meta").innerHTML = [info.label, info.model, `${Object.keys(info.aspects).length} 个方面`]
+    .map((t) => `<span class="chip-static">${esc(t)}</span>`).join("");
+  $("aspects").innerHTML = Object.entries(info.aspects)
+    .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  for (const ex of info.examples) {
+    const b = document.createElement("button");
+    b.className = "example"; b.textContent = ex; b.title = ex;
+    b.onclick = () => { $("text").value = ex; analyze(); };
+    $("examples").appendChild(b);
+  }
+}
+
+// 把微调后模型抽到的"观点"在原文里标出来
+function highlight(text, aspects) {
+  const spans = [];
+  for (const a of aspects) {
+    const i = text.indexOf(a["观点"]);
+    if (i < 0 || !a["观点"]) continue;
+    const j = i + a["观点"].length;
+    if (spans.some((s) => i < s.end && j > s.start)) continue;
+    spans.push({ start: i, end: j, a });
+  }
+  spans.sort((x, y) => x.start - y.start);
+  let html = "", pos = 0;
+  for (const s of spans) {
+    html += esc(text.slice(pos, s.start));
+    html += `<mark class="${sentiClass(s.a["情感"])}">${esc(text.slice(s.start, s.end))}<sup>${esc(s.a["方面"])}</sup></mark>`;
+    pos = s.end;
+  }
+  return html + esc(text.slice(pos));
+}
+
+function renderResult(el, r) {
+  const head = el.querySelector("h2").outerHTML;
+  const p = r.parsed;
+  let body = `<div class="status">`;
+  body += p ? `<span class="badge ok">格式合格</span>` : `<span class="badge bad">格式不合格</span>`;
+  if (p) body += `<span class="badge ${sentiClass(p["整体情感"])}">整体${esc(p["整体情感"])}</span>`;
+  body += `<span class="ms">${(r.ms / 1000).toFixed(2)} 秒</span></div>`;
+  if (!p) {
+    body += `<div class="problems">程序没法直接使用这条输出：<ul>${r.problems.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  } else if (p["方面"].length === 0) {
+    body += `<div class="empty">没有抽取到具体方面</div>`;
+  } else {
+    body += `<table>${p["方面"].map((a) => `<tr>
+      <td class="aspect">${esc(a["方面"])}</td>
+      <td>${esc(a["观点"])}</td>
+      <td class="senti"><span class="dot ${sentiClass(a["情感"])}"></span>${esc(a["情感"])}</td></tr>`).join("")}</table>`;
+  }
+  body += `<details><summary>模型原始输出</summary><pre>${esc(r.raw)}</pre></details>`;
+  el.innerHTML = head + body;
+}
+
+async function analyze() {
+  const text = $("text").value.trim();
+  if (!text) return $("text").focus();
+  $("run").disabled = true;
+  $("error").hidden = true;
+  for (const id of ["original", "lora"]) {
+    const el = $(id);
+    el.innerHTML = el.querySelector("h2").outerHTML + `<div class="placeholder"><span class="spinner"></span> 生成中…</div>`;
+  }
+  try {
+    const res = await fetch("/api/extract", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    renderResult($("original"), data.original);
+    renderResult($("lora"), data.lora);
+    const aspects = data.lora.parsed ? data.lora.parsed["方面"] : [];
+    $("review").innerHTML = `<span class="label">原文（高亮为微调后模型抽到的观点）</span>` + highlight(text, aspects);
+    $("review").hidden = false;
+  } catch (e) {
+    $("error").textContent = "出错了：" + e.message;
+    $("error").hidden = false;
+    for (const id of ["original", "lora"]) {
+      const el = $(id);
+      el.innerHTML = el.querySelector("h2").outerHTML + `<div class="placeholder">没有结果</div>`;
+    }
+  } finally {
+    $("run").disabled = false;
+  }
+}
+
+$("run").onclick = analyze;
+$("text").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) analyze(); });
+loadInfo();
+</script>
+</body>
+</html>

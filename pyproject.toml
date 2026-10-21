@@ -1,0 +1,14 @@
+[project]
+name = "review-lora"
+version = "0.1.0"
+description = "LoRA 微调 Qwen3-1.7B 做中文评论结构化抽取（MLX）"
+authors = [
+    { name = "ced", email = "319122574+irenasikia-svg@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "datasets>=5.1.0",
+    "matplotlib>=3.11.2",
+    "mlx-lm>=0.32.2",
+]
+
