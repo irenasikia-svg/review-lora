@@ -170,14 +170,20 @@ uv run python scripts/demo_server.py --version v2   # 浏览器打开 http://loc
 
 ## 复现
 
+在终端里、项目根目录下逐行运行。需要 Apple Silicon 的 Mac 和 [uv](https://docs.astral.sh/uv/)；
+第一次运行会自动从 Hugging Face 下载模型（老师约 17GB，学生约 3.5GB，14B 约 8GB）。
+
 ```bash
 uv sync
+mkdir -p data/raw logs
+curl -L -o data/raw/online_shopping.parquet https://huggingface.co/datasets/XiangPan/online_shopping_10_cats_62k/resolve/main/data/train-00000-of-00001.parquet
 uv run python scripts/prepare_data.py
 uv run python scripts/label_with_teacher.py      # 第二版约 50 分钟；可先加参数 48 只试标 48 条
 uv run python scripts/build_dataset.py
 uv run python scripts/evaluate.py --name 原始模型
-uv run mlx_lm.lora -c lora_config.yaml 2>&1 | tee logs/train.log
-# 从 adapters/ 里挑验证损失最低的检查点（第二版是第 400 步）复制成 adapters_best/
+uv run mlx_lm.lora -c lora_config.yaml 2>&1 | tee logs/train.log   # 约 1.5 小时
+# 从日志里找验证损失（val）最低的步数，第二版是第 400 步，把它复制成 adapters_best/
+mkdir -p adapters_best && cp adapters/adapter_config.json adapters_best/ && cp adapters/0000400_adapters.safetensors adapters_best/adapters.safetensors
 uv run python scripts/evaluate.py --name LoRA微调后 --adapter adapters_best
 uv run python scripts/annotator_agreement.py --name 对比14B --model mlx-community/Qwen3-14B-4bit --no-examples
 uv run python scripts/plot_loss.py
