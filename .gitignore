@@ -4,3 +4,4 @@ runs/*/adapters*/
 data/raw/
 logs/
 __pycache__/
+data/value_features.parquet
