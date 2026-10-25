@@ -5,3 +5,7 @@ data/raw/
 logs/
 __pycache__/
 data/value_features.parquet
+
+# CDT503：调参产生的 LoRA 权重和临时文件不入库
+cdt503/runs/
+cdt503/results/smoke/
