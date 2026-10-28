@@ -1,0 +1,22 @@
+model: mlx-community/Qwen3-1.7B-bf16
+train: true
+data: /Users/kuumo/claude/review-lora/data/sft
+adapter_path: /Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5/seg_0
+fine_tune_type: lora
+mask_prompt: true
+num_layers: -1
+lora_parameters:
+  rank: 16
+  scale: 20.0
+  dropout: 0.05
+optimizer: adamw
+learning_rate: 5.0e-05
+batch_size: 8
+iters: 480
+max_seq_length: 1280
+grad_checkpoint: true
+steps_per_report: 10
+steps_per_eval: 40
+val_batches: -1
+save_every: 40
+seed: 42

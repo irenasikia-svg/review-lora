@@ -1,0 +1,31 @@
+{
+  "name": "baseline_seed43",
+  "overrides": {
+    "seed": 43
+  },
+  "rank": 16,
+  "scale": 20.0,
+  "learning_rate": 0.0001,
+  "num_layers": -1,
+  "batch_size": 8,
+  "seed": 43,
+  "iters": 480,
+  "trainable_pct": 1.013,
+  "trainable_M": 17.433,
+  "best_step": 280,
+  "best_val_loss": 0.138,
+  "final_val_loss": 0.149,
+  "train_minutes": 93.33935911655426,
+  "resumed_at": [],
+  "imported_from": null,
+  "valid": {
+    "split": "valid",
+    "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/baseline_seed43/best",
+    "n": 142,
+    "sec_per_item": 0.5842070579528809,
+    "JSON合格率": 1.0,
+    "整体情感准确率": 0.9859154929577465,
+    "方面F1": 0.7474332648870636,
+    "方面F1_只看方面名": 0.7802874743326489
+  }
+}

@@ -1,0 +1,9 @@
+\begin{tabular}{lcccc}
+\toprule
+Model & JSON valid & Sentiment acc. & Aspect F1 (95\% CI) & Aspect-name F1 \\
+\midrule
+Base Qwen3-1.7B (no LoRA) & 0.908 & 0.882 & 0.513 (0.463--0.561) & 0.540 \\
+LoRA, default config (r=16, lr=1e-4) & 1.000 & 0.947 & 0.734 (0.698--0.769) & 0.798 \\
+LoRA, tuned (r=16, lr=5e-5) & 1.000 & 0.969 & 0.807 (0.773--0.838) & 0.834 \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,31 @@
+{
+  "name": "lr2e-4",
+  "overrides": {
+    "learning_rate": 0.0002
+  },
+  "rank": 16,
+  "scale": 20.0,
+  "learning_rate": 0.0002,
+  "num_layers": -1,
+  "batch_size": 8,
+  "seed": 42,
+  "iters": 480,
+  "trainable_pct": 1.013,
+  "trainable_M": 17.433,
+  "best_step": 480,
+  "best_val_loss": 4.5,
+  "final_val_loss": 4.5,
+  "train_minutes": 92.84565265973409,
+  "resumed_at": [],
+  "imported_from": null,
+  "valid": {
+    "split": "valid",
+    "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr2e-4/best",
+    "n": 142,
+    "sec_per_item": 1.304297690660181,
+    "JSON合格率": 0.0,
+    "整体情感准确率": 0.0,
+    "方面F1": 0.0,
+    "方面F1_只看方面名": 0.0
+  }
+}

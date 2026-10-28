@@ -1,0 +1,31 @@
+{
+  "name": "layers16",
+  "overrides": {
+    "num_layers": 16
+  },
+  "rank": 16,
+  "scale": 20.0,
+  "learning_rate": 0.0001,
+  "num_layers": 16,
+  "batch_size": 8,
+  "seed": 42,
+  "iters": 480,
+  "trainable_pct": 0.579,
+  "trainable_M": 9.961,
+  "best_step": 200,
+  "best_val_loss": 0.126,
+  "final_val_loss": 0.148,
+  "train_minutes": 64.9579477349917,
+  "resumed_at": [],
+  "imported_from": null,
+  "valid": {
+    "split": "valid",
+    "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/layers16/best",
+    "n": 142,
+    "sec_per_item": 0.4915404219022939,
+    "JSON合格率": 1.0,
+    "整体情感准确率": 0.9929577464788732,
+    "方面F1": 0.7598253275109169,
+    "方面F1_只看方面名": 0.7860262008733624
+  }
+}

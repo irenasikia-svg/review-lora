@@ -1,0 +1,57 @@
+{
+  "n": 262,
+  "models": {
+    "base_model_no_lora": {
+      "label": "Base Qwen3-1.7B (no LoRA)",
+      "json_valid": 0.9083969465648855,
+      "sentiment_acc": 0.8816793893129771,
+      "aspect_f1": 0.513353115727003,
+      "aspect_f1_ci95": [
+        0.46280740153716493,
+        0.561197921435766
+      ],
+      "aspect_name_f1": 0.540059347181009,
+      "sec_per_item": 0.5360774238600986
+    },
+    "baseline_best": {
+      "label": "LoRA, default config (r=16, lr=1e-4)",
+      "json_valid": 1.0,
+      "sentiment_acc": 0.9465648854961832,
+      "aspect_f1": 0.7335640138408305,
+      "aspect_f1_ci95": [
+        0.6975034476398861,
+        0.7694083602452919
+      ],
+      "aspect_name_f1": 0.7981545559400232,
+      "sec_per_item": 0.6094287251698152
+    },
+    "lr5e-5_best": {
+      "label": "LoRA, tuned (r=16, lr=5e-5)",
+      "json_valid": 1.0,
+      "sentiment_acc": 0.9694656488549618,
+      "aspect_f1": 0.8068571428571428,
+      "aspect_f1_ci95": [
+        0.773018586424631,
+        0.838260335377852
+      ],
+      "aspect_name_f1": 0.8342857142857143,
+      "sec_per_item": 0.61605468415122
+    }
+  },
+  "diffs": {
+    "lr5e-5_best_minus_baseline_best": {
+      "point": 0.07329312901631235,
+      "ci95": [
+        0.03764438212430555,
+        0.10981977977070505
+      ]
+    },
+    "baseline_best_minus_base_model_no_lora": {
+      "point": 0.22021089811382755,
+      "ci95": [
+        0.16402892140668318,
+        0.2773116085624095
+      ]
+    }
+  }
+}

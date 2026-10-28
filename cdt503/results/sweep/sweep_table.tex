@@ -1,0 +1,16 @@
+\begin{tabular}{lrrrrrrr}
+\toprule
+Run & Rank & Scale & LR & Layers & Best step & Val loss & Aspect F1 \\
+\midrule
+baseline & 16 & 20 & 1e-04 & all & 400 & 0.130 & 0.758 \\
+baseline-seed43 & 16 & 20 & 1e-04 & all & 280 & 0.138 & 0.747 \\
+rank4 & 4 & 20 & 1e-04 & all & 440 & 0.118 & 0.780 \\
+rank8 & 8 & 20 & 1e-04 & all & 200 & 0.131 & 0.762 \\
+rank32 & 32 & 20 & 1e-04 & all & 400 & 0.179 & 0.697 \\
+rank32-scale10 & 32 & 10 & 1e-04 & all & 400 & 0.135 & 0.766 \\
+lr5e-5 & 16 & 20 & 5e-05 & all & 240 & 0.115 & 0.793 \\
+lr2e-4 & 16 & 20 & 2e-04 & all & 480 & 4.500 & 0.000 \\
+layers8 & 16 & 20 & 1e-04 & 8 & 320 & 0.144 & 0.749 \\
+layers16 & 16 & 20 & 1e-04 & 16 & 200 & 0.126 & 0.760 \\
+\bottomrule
+\end{tabular}

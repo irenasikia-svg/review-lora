@@ -1,0 +1,10 @@
+{
+  "split": "valid",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/layers16/best",
+  "n": 142,
+  "sec_per_item": 0.4915404219022939,
+  "JSON合格率": 1.0,
+  "整体情感准确率": 0.9929577464788732,
+  "方面F1": 0.7598253275109169,
+  "方面F1_只看方面名": 0.7860262008733624
+}

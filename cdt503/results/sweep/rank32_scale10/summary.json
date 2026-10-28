@@ -1,0 +1,32 @@
+{
+  "name": "rank32_scale10",
+  "overrides": {
+    "rank": 32,
+    "scale": 10.0
+  },
+  "rank": 32,
+  "scale": 10.0,
+  "learning_rate": 0.0001,
+  "num_layers": -1,
+  "batch_size": 8,
+  "seed": 42,
+  "iters": 480,
+  "trainable_pct": 2.026,
+  "trainable_M": 34.865,
+  "best_step": 400,
+  "best_val_loss": 0.135,
+  "final_val_loss": 0.155,
+  "train_minutes": 93.26252948443094,
+  "resumed_at": [],
+  "imported_from": null,
+  "valid": {
+    "split": "valid",
+    "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/rank32_scale10/best",
+    "n": 142,
+    "sec_per_item": 0.5751463090869743,
+    "JSON合格率": 1.0,
+    "整体情感准确率": 0.9788732394366197,
+    "方面F1": 0.7660455486542443,
+    "方面F1_只看方面名": 0.7950310559006212
+  }
+}

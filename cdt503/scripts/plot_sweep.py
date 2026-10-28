@@ -28,13 +28,17 @@ plt.rcParams.update({
 
 # 每个面板：标题、要比较的组、图例里怎么写
 FACTORS = [
-    ("LoRA rank", ["rank4", "rank8", "baseline", "rank32"], lambda s: f"r={s['rank']}"),
+    ("LoRA rank", ["rank4", "rank8", "baseline", "rank32", "rank32_scale10"],
+     lambda s: f"r={s['rank']}" + (f"\ns={s['scale']:g}" if s.get("scale", 20.0) != 20.0 else "")),
     ("Learning rate", ["lr5e-5", "baseline", "lr2e-4"], lambda s: f"lr={s['learning_rate']:.0e}".replace("e-0", "e-")),
     ("LoRA layers", ["layers8", "layers16", "baseline"],
      lambda s: "all 28" if s["num_layers"] == -1 else f"top {s['num_layers']}"),
 ]
 BASE_COLOR = "#222222"
-OTHER_COLORS = ["#4C72B0", "#55A868", "#C44E52"]
+# 验证损失大于这个值就算训练发散（正常的组都在 0.12–0.18）。发散组在图里只标注文字，不让它把坐标轴撑大
+DIVERGED_LOSS = 1.0
+CURVE_YLIM = (0.10, 0.40)
+OTHER_COLORS = ["#4C72B0", "#55A868", "#C44E52", "#8172B2"]
 
 
 def color_of(names, n):
@@ -67,6 +71,10 @@ def ordered(runs, names):
     return [n for n in names if n in runs]
 
 
+def diverged(s):
+    return s["best_val_loss"] > DIVERGED_LOSS
+
+
 def plot_curves(runs, out_dir):
     fig, axes = plt.subplots(1, 3, figsize=(7.16, 2.3), sharey=True)
     for ax, (title, names, label) in zip(axes, FACTORS):
@@ -74,13 +82,18 @@ def plot_curves(runs, out_dir):
             if n not in runs:
                 continue
             s, color = runs[n], color_of(names, n)
+            if diverged(s):
+                ax.text(0.97, 0.95, f"{label(s)}: diverged\n(val loss > {s['best_val_loss']:.1f})",
+                        transform=ax.transAxes, ha="right", va="top", color=color, fontsize=7.5)
+                continue
             steps, vals = zip(*[(x, y) for x, y in s["curve"]["val"] if x > 1])  # 第 1 步（未训练）的损失太大，不画
             lw = 2.0 if n == "baseline" else 1.3
-            ax.plot(steps, vals, color=color, lw=lw, label=label(s))
+            ax.plot(steps, vals, color=color, lw=lw, label=label(s).replace("\n", ", "))
             ax.scatter([s["best_step"]], [s["best_val_loss"]], color=color, s=18, zorder=3)
+        ax.set_ylim(*CURVE_YLIM)
         ax.set_title(title)
         ax.set_xlabel("Training step")
-        ax.legend(frameon=False)
+        ax.legend(frameon=False, loc="upper right" if title != "Learning rate" else "center right")
         ax.grid(alpha=0.25)
     axes[0].set_ylabel("Validation loss")
     fig.tight_layout()
@@ -94,19 +107,26 @@ def plot_metrics(runs, out_dir):
         b = runs["baseline_seed43"]["valid"]["方面F1"]
         noise = (min(a, b), max(a, b))
     fig, axes = plt.subplots(1, 3, figsize=(7.16, 2.2), sharey=True)
+    # 三个面板共用 y 轴，所以范围要按所有面板里没发散的组一起算
+    ok_all = [n for _, names, _ in FACTORS for n in ordered(runs, names) if not diverged(runs[n])]
+    lo = min([runs[n]["valid"]["方面F1"] for n in ok_all] + ([noise[0]] if noise else []))
+    hi = max(runs[n]["valid"]["方面F1"] for n in ok_all)
+    ymin, ymax = max(0, lo - 0.03), min(1, hi + 0.02)
     for ax, (title, names, label) in zip(axes, FACTORS):
         names = ordered(runs, names)
-        f1 = [runs[n]["valid"]["方面F1"] for n in names]
-        colors = ["#222222" if n == "baseline" else "#4C72B0" for n in names]
-        bars = ax.bar(range(len(names)), f1, color=colors, width=0.6)
+        ok = [n for n in names if not diverged(runs[n])]
+        f1 = {n: runs[n]["valid"]["方面F1"] for n in names}
         if noise:
             ax.axhspan(*noise, color="#999999", alpha=0.3, lw=0, label="Seed variation (baseline, 2 seeds)")
-        for b, v in zip(bars, f1):
-            ax.text(b.get_x() + b.get_width() / 2, v + 0.005, f"{v:.3f}", ha="center", va="bottom", fontsize=7.5)
+        for i, n in enumerate(names):
+            if n in ok:
+                ax.bar(i, f1[n], color=BASE_COLOR if n == "baseline" else "#4C72B0", width=0.6)
+                ax.text(i, f1[n] + 0.003, f"{f1[n]:.3f}", ha="center", va="bottom", fontsize=7.5)
+            else:  # 发散：F1 为 0，不画柱子，在坐标轴底部写字
+                ax.text(i, ymin + 0.01, "diverged\n(F1 = 0)", ha="center", va="bottom", fontsize=7.5, color="#C44E52")
         ax.set_xticks(range(len(names)), [label(runs[n]) for n in names])
         ax.set_title(title)
-        lo = min(f1 + ([noise[0]] if noise else []))
-        ax.set_ylim(max(0, lo - 0.08), min(1, max(f1) + 0.05))
+        ax.set_ylim(ymin, ymax)
         ax.grid(axis="y", alpha=0.25)
     axes[0].set_ylabel("Aspect F1 (validation)")
     fig.tight_layout()
@@ -135,24 +155,27 @@ def plot_cost(runs, out_dir):
 
 
 def write_table(runs, out_dir):
-    order = ["baseline", "baseline_seed43", "rank4", "rank8", "rank32", "lr5e-5", "lr2e-4", "layers8", "layers16"]
+    order = ["baseline", "baseline_seed43", "rank4", "rank8", "rank32", "rank32_scale10",
+             "lr5e-5", "lr2e-4", "layers8", "layers16"]
     rows = []
     for n in ordered(runs, order):
         s, v = runs[n], runs[n]["valid"]
-        rows.append([n, s["rank"], f"{s['learning_rate']:.0e}", "all" if s["num_layers"] == -1 else s["num_layers"],
+        # 第一晚的组在加 scale 字段之前就跑完了，它们的 scale 都是默认的 20
+        rows.append([n, s["rank"], f"{s.get('scale', 20.0):g}", f"{s['learning_rate']:.0e}",
+                     "all" if s["num_layers"] == -1 else s["num_layers"],
                      s["seed"], f"{s.get('trainable_M', float('nan')):.1f}", s["best_step"], f"{s['best_val_loss']:.3f}",
                      f"{v['JSON合格率']:.3f}", f"{v['整体情感准确率']:.3f}", f"{v['方面F1']:.3f}",
                      f"{v['sec_per_item']:.2f}", f"{s['train_minutes']:.0f}"])
-    header = ["run", "rank", "lr", "layers", "seed", "params_M", "best_step", "best_val_loss",
+    header = ["run", "rank", "scale", "lr", "layers", "seed", "params_M", "best_step", "best_val_loss",
               "json_valid", "sentiment_acc", "aspect_f1", "sec_per_item", "train_min"]
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "sweep_table.csv"), "w") as f:
         f.write(",".join(header) + "\n" + "\n".join(",".join(map(str, r)) for r in rows) + "\n")
     # LaTeX 表：报告里直接 \input
-    tex = ["\\begin{tabular}{lrrrrrr}", "\\toprule",
-           "Run & Rank & LR & Layers & Best step & Val loss & Aspect F1 \\\\", "\\midrule"]
+    tex = ["\\begin{tabular}{lrrrrrrr}", "\\toprule",
+           "Run & Rank & Scale & LR & Layers & Best step & Val loss & Aspect F1 \\\\", "\\midrule"]
     for r in rows:
-        tex.append(f"{r[0].replace('_', '-')} & {r[1]} & {r[2]} & {r[3]} & {r[6]} & {r[7]} & {r[10]} \\\\")
+        tex.append(f"{r[0].replace('_', '-')} & {r[1]} & {r[2]} & {r[3]} & {r[4]} & {r[7]} & {r[8]} & {r[11]} \\\\")
     tex += ["\\bottomrule", "\\end{tabular}"]
     open(os.path.join(out_dir, "sweep_table.tex"), "w").write("\n".join(tex) + "\n")
     print("已保存", os.path.relpath(os.path.join(out_dir, "sweep_table.{csv,tex}"), ROOT))

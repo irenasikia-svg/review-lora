@@ -1,0 +1,10 @@
+{
+  "split": "valid",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr2e-4/best",
+  "n": 142,
+  "sec_per_item": 1.304297690660181,
+  "JSON合格率": 0.0,
+  "整体情感准确率": 0.0,
+  "方面F1": 0.0,
+  "方面F1_只看方面名": 0.0
+}

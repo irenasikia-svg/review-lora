@@ -48,6 +48,9 @@ RUNS = {
     "layers16": {"num_layers": 16},
     # 和基准完全一样，只换随机种子：用来估计"同一配置跑两次能差多少"，判断其他组的差异是不是噪声
     "baseline_seed43": {"seed": 43},
+    # 验证"r=32 变差是因为更新幅度变大"：mlx-lm 的 scale 是直接乘上去的倍数，相当于标准 LoRA 的 α/r。
+    # 基准 r=16、scale=20 即 α=320；保持 α 不变，r=32 应取 320/32=10。如果它追上基准，说明问题出在幅度而不是 rank
+    "rank32_scale10": {"rank": 32, "scale": 10.0},
 }
 SMOKE = {"iters": 10, "steps_per_eval": 5, "save_every": 5, "steps_per_report": 5, "val_batches": 2}
 SMOKE_EVAL_LIMIT = 16
@@ -88,8 +91,8 @@ def make_config(name, overrides, smoke):
     cfg = yaml.safe_load(open(BASE_CONFIG))
     cfg["data"] = os.path.join(ROOT, "data/sft")
     for k, v in overrides.items():
-        if k == "rank":
-            cfg["lora_parameters"]["rank"] = v
+        if k in ("rank", "scale"):
+            cfg["lora_parameters"][k] = v
         else:
             cfg[k] = v
     if smoke:
@@ -225,7 +228,8 @@ def finish(p, cfg, state, overrides, smoke):
     train_sec = sum(s.get("ended", s["started"]) - s["started"] for s in state["segments"])
     summary = {
         "name": p.name, "overrides": overrides,
-        "rank": cfg["lora_parameters"]["rank"], "learning_rate": cfg["learning_rate"],
+        "rank": cfg["lora_parameters"]["rank"], "scale": cfg["lora_parameters"]["scale"],
+        "learning_rate": cfg["learning_rate"],
         "num_layers": cfg["num_layers"], "batch_size": cfg["batch_size"], "seed": cfg["seed"], "iters": cfg["iters"],
         **params, "best_step": best_step, "best_val_loss": best_val, "final_val_loss": val_curve[-1][1],
         "train_minutes": train_sec / 60, "resumed_at": [s["offset"] for s in state["segments"][1:]],

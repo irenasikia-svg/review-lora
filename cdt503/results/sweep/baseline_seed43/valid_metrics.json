@@ -1,0 +1,10 @@
+{
+  "split": "valid",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/baseline_seed43/best",
+  "n": 142,
+  "sec_per_item": 0.5842070579528809,
+  "JSON合格率": 1.0,
+  "整体情感准确率": 0.9859154929577465,
+  "方面F1": 0.7474332648870636,
+  "方面F1_只看方面名": 0.7802874743326489
+}
