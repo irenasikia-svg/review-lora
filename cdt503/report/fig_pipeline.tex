@@ -1,0 +1,42 @@
+% 系统流程框图（报告图 1）。main.tex 里用 \input{fig_pipeline} 引入，需要 tikz 及 positioning、arrows.meta 库。
+\begin{tikzpicture}[
+    node distance=3mm and 6mm,
+    box/.style={draw, rounded corners=2pt, align=center, font=\scriptsize, minimum height=10.5mm,
+                text width=20mm, inner sep=2pt},
+    data/.style={box, fill=gray!10},
+    model/.style={box, fill=blue!8, draw=blue!50!black},
+    human/.style={box, fill=orange!12, draw=orange!60!black},
+    eval/.style={box, fill=green!8, draw=green!40!black},
+    arr/.style={-{Latex[length=1.5mm]}, thick},
+    lab/.style={font=\tiny\itshape, text=black!70},
+  ]
+  % ---- 第一排：训练数据和训练（从左到右）----
+  \node[data] (raw) {Raw reviews\\62{,}774, 10 categories};
+  \node[data, right=of raw] (clean) {Clean \& stratified\\sample: 2{,}425};
+  \node[model, right=of clean] (teacher) {\textbf{Teacher}\\Qwen3-30B-A3B\\16-aspect schema,\\rules, 4 examples};
+  \node[data, right=of teacher] (filter) {Quality filter\\valid JSON \&\\sentiment = human\\2{,}228 kept};
+  \node[data, right=of filter] (split) {Train / Val / Test\\1{,}824 / 142 / 262};
+  \node[model, right=of split] (student) {\textbf{Student}\\Qwen3-1.7B + LoRA\\(MLX, loss on\\answer tokens)};
+  \draw[arr] (raw) -- (clean);
+  \draw[arr] (clean) -- node[lab, above] {prompt} (teacher);
+  \draw[arr] (teacher) -- node[lab, above] {JSON} (filter);
+  \draw[arr] (filter) -- (split);
+  \draw[arr] (split) -- node[lab, above] {SFT} (student);
+
+  % ---- 第二排：选模型，然后三种用途（从右到左）----
+  \node[eval, below=7mm of student] (sweep) {Sweep: rank, LR,\\layers (10 runs)\\select by val loss};
+  \node[model, left=of sweep] (final) {\textbf{Final adapter}\\$r{=}16$, lr $5{\times}10^{-5}$\\70\,MB};
+  \node[eval, left=of final] (test) {Test set (262)\\vs.\ teacher labels\\evaluated once};
+  \node[eval, left=of test] (heval) {Human evaluation\\base vs.\ student\\vs.\ teacher};
+  \node[model, left=of heval] (demo) {\textbf{Gradio demo}\\one model in memory,\\LoRA on/off};
+  \draw[arr] (student) -- node[lab, right] {checkpoints} (sweep);
+  \draw[arr] (sweep) -- (final);
+  \draw[arr] (final) -- (test);
+  % 最终模型到人工评估、演示的箭头从两排之间绕过去
+  \draw[arr] (final.north) -- ++(0,2.4mm) -| (heval.north);
+  \draw[arr] (final.north) -- ++(0,2.4mm) -| (demo.north);
+
+  % ---- 第三排：人工标注，评论来自从没用过的那部分数据 ----
+  \node[human, below=4mm of heval] (fresh) {100 never-used reviews\\2 annotators\\+ adjudication};
+  \draw[arr] (fresh) -- node[lab, right] {gold labels} (heval);
+\end{tikzpicture}
