@@ -1,0 +1,5 @@
+{
+  "model": "student",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5/best",
+  "sec_per_item": 0.6743332195281982
+}

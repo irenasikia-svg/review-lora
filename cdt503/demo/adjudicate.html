@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>标注复核</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #f0eee9; --text: #1d1c1a; --muted: #6d6a63;
+    --border: #e2dfd8; --accent: #3b5bdb; --warn: #a15c00; --warn-soft: #fdf0d9;
+    --pos: #1f8a4c; --pos-soft: #e3f4ea; --neg: #c2412d; --neg-soft: #fbe7e3; --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151513; --surface: #1e1e1b; --surface-2: #272724; --text: #ecebe6; --muted: #9c998f;
+      --border: #34332f; --accent: #8ea6ff; --warn: #f0b35a; --warn-soft: #3a2c16;
+      --pos: #5cc98a; --pos-soft: #1b3326; --neg: #f08470; --neg-soft: #3a211c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-top: 16px; }
+  .progress { margin-top: 18px; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .bar { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .bar div { height: 100%; background: var(--accent); }
+  .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .tag { background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 1px 10px; }
+  .overall { font-weight: 600; border-radius: 999px; padding: 1px 10px; }
+  .overall.pos { background: var(--pos-soft); color: var(--pos); } .overall.neg { background: var(--neg-soft); color: var(--neg); }
+  .review { font-size: 19px; line-height: 1.8; margin: 14px 0 0; word-break: break-word; }
+  .reasons { margin-top: 12px; padding: 8px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: 13px; }
+  .anns { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin-top: 12px; font-size: 14px; align-items: start; }
+  .chip { display: inline-block; font-size: 13px; border-radius: 6px; padding: 1px 8px; margin: 0 4px 4px 0; }
+  .chip.pos { background: var(--pos-soft); color: var(--pos); } .chip.neg { background: var(--neg-soft); color: var(--neg); }
+  .muted { color: var(--muted); }
+  .hint { font-size: 13px; color: var(--muted); margin: 16px 0 8px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 8px; }
+  .asp { text-align: left; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 10px; cursor: pointer; line-height: 1.35; }
+  .asp:hover { border-color: var(--accent); }
+  .asp b { font-size: 14px; display: block; } .asp small { font-size: 11px; color: var(--muted); }
+  .asp .state { float: right; font-size: 12px; font-weight: 600; }
+  .asp.pos { background: var(--pos-soft); border-color: var(--pos); } .asp.pos .state { color: var(--pos); }
+  .asp.neg { background: var(--neg-soft); border-color: var(--neg); } .asp.neg .state { color: var(--neg); }
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 8px; flex-wrap: wrap; }
+  .nav button { font: inherit; font-size: 14px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 16px; cursor: pointer; }
+  .nav .primary { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .nav .primary { color: #111; } }
+  .nav button:disabled { opacity: .4; cursor: default; }
+  .status { font-size: 13px; color: var(--muted); }
+  .done { text-align: center; padding: 24px 8px; } .done h2 { margin: 0 0 8px; color: var(--pos); }
+  .rules { font-size: 13px; color: var(--muted); } .rules summary { cursor: pointer; color: var(--text); font-weight: 600; }
+  .rules ul { padding-left: 18px; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>标注复核</h1>
+  <p class="sub">两位标注者一起看下面这些有疑问的标注，商量出最终答案。原始标注会保留，这里存的是复核后的版本。</p>
+  <div id="app"></div>
+  <details class="card rules"><summary>标注规则</summary><ul id="rules"></ul></details>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const NEXT = { undefined: "正面", "正面": "负面", "负面": undefined };
+let data, pos = 0, cur = {};
+
+async function init() {
+  data = await fetch("/api/items").then((r) => r.json());
+  $("rules").innerHTML = ["每个方面最多一次；只有说到了具体属性才选，笼统评价不选", ...data.rules].map((r) => `<li>${esc(r)}</li>`).join("");
+  const first = data.items.findIndex((it) => !(String(it.gid) in data.final));
+  pos = first < 0 ? data.items.length : first;
+  render();
+}
+
+const chips = (asps) => asps.length
+  ? asps.map((a) => `<span class="chip ${a["情感"] === "正面" ? "pos" : "neg"}">${esc(a["方面"])} ${a["情感"] === "正面" ? "+" : "−"}</span>`).join("")
+  : `<span class="muted">没有具体方面</span>`;
+
+function render(status = "") {
+  const n = Object.keys(data.final).length, total = data.items.length;
+  const head = `<div class="progress"><span>已复核 ${n} / ${total}</span><div class="bar"><div style="width:${(100 * n) / Math.max(1, total)}%"></div></div></div>`;
+  if (pos >= total) {
+    $("app").innerHTML = head + `<section class="card done"><h2>${n < total ? `还有 ${total - n} 条没复核` : "全部复核完了 🎉"}</h2>
+      <p class="sub">结果在 cdt503/data/aspect_gold_adjudicated.jsonl，回到对话里告诉我就行。</p>
+      <div class="nav" style="justify-content:center"><button id="back">回去检查</button></div></section>`;
+    $("back").onclick = () => { pos = 0; render(); };
+    return;
+  }
+  const it = data.items[pos];
+  const saved = data.final[String(it.gid)];
+  cur = Object.fromEntries((saved || it.prefill).map((a) => [a["方面"], a["情感"]]));
+  $("app").innerHTML = head + `<section class="card">
+    <div class="meta"><span class="tag">${esc(it.cat)} · ${esc(it.cat_en)}</span>
+      <span class="overall ${it.overall === "正面" ? "pos" : "neg"}">数据集总体评价：${it.overall === "正面" ? "好评" : "差评"}</span>
+      <span>第 ${pos + 1} 条</span>${saved ? `<span style="color:var(--pos)">已复核</span>` : ""}</div>
+    <p class="review">${esc(it.text)}</p>
+    <div class="reasons">需要复核：${it.reasons.map(esc).join("；")}</div>
+    <div class="anns">${Object.entries(it.annotations).map(([w, a]) => `<b>${esc(w)} 标的</b><div>${chips(a)}</div>`).join("")}</div>
+    <p class="hint">最终答案（${saved ? "上次保存的结果" : "已预先填好两人一致的部分"}）。点一下 = 好评，再点 = 差评，第三下 = 取消</p>
+    <div class="grid">${data.aspects.map((a) => `<button class="asp" data-a="${esc(a.name)}" title="${esc(a.desc)}">
+      <span class="state"></span><b>${esc(a.name)}</b><small>${esc(a.en)}</small></button>`).join("")}</div>
+    <div class="nav">
+      <button id="prev" ${pos === 0 ? "disabled" : ""}>← 上一条</button>
+      <span class="status">${status}</span>
+      <button id="save" class="primary">保存最终答案，下一条 ↵</button>
+    </div></section>`;
+  document.querySelectorAll(".asp").forEach((b) => (b.onclick = () => { cur[b.dataset.a] = NEXT[cur[b.dataset.a]]; paint(); }));
+  $("prev").onclick = () => { pos--; render(); };
+  $("save").onclick = save;
+  paint();
+}
+
+function paint() {
+  document.querySelectorAll(".asp").forEach((b) => {
+    const s = cur[b.dataset.a];
+    b.className = "asp" + (s === "正面" ? " pos" : s === "负面" ? " neg" : "");
+    b.querySelector(".state").textContent = s ? (s === "正面" ? "好评 +" : "差评 −") : "";
+  });
+}
+
+async function save() {
+  const it = data.items[pos];
+  const aspects = Object.entries(cur).filter(([, s]) => s).map(([a, s]) => ({ "方面": a, "情感": s }));
+  if (!aspects.length && !confirm("最终答案是\"没有具体方面\"吗？")) return;
+  const res = await fetch("/api/final", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gid: it.gid, aspects }) });
+  const out = await res.json();
+  if (!res.ok) { document.querySelector(".status").innerHTML = `<span style="color:var(--neg)">保存失败：${esc(out.error)}</span>`; return; }
+  data.final[String(it.gid)] = aspects;
+  pos++;
+  render(`<span style="color:var(--pos)">已保存</span>`);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && data && pos < data.items.length) { e.preventDefault(); save(); }
+});
+init();
+</script>
+</body>
+</html>

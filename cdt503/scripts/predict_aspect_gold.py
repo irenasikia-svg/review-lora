@@ -7,7 +7,7 @@
 每个模型在单独的子进程里跑：跑完进程退出，GPU 内存一定会释放，不会和下一个模型叠加（老师约 17GB）。
 用 GPU，预计总共约 5 分钟。
 
-用法：uv run python cdt503/scripts/predict_aspect_gold.py --adapter cdt503/runs/sweep/<最优组>/best
+用法：uv run python cdt503/scripts/predict_aspect_gold.py      # 学生默认用调参选出的 lr=5e-5
 输出：cdt503/results/human_eval/preds_<model>.jsonl
 """
 import argparse
@@ -50,7 +50,7 @@ def run_one(model_key, adapter):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--adapter", default=os.path.join(ROOT, "adapters_best"))
+    ap.add_argument("--adapter", default=os.path.join(ROOT, "cdt503/runs/sweep/lr5e-5/best"))
     ap.add_argument("--models", nargs="+", default=["base", "student", "teacher"])
     ap.add_argument("--_one", help=argparse.SUPPRESS)
     args = ap.parse_args()

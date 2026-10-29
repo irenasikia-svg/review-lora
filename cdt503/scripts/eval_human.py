@@ -126,6 +126,7 @@ def main():
     ap.add_argument("--pred-dir", default=os.path.join(ROOT, "cdt503/results/human_eval"))
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "cdt503/results/human_eval"))
     ap.add_argument("--fig-dir", default=os.path.join(ROOT, "cdt503/figures"))
+    ap.add_argument("--no-adjudication", action="store_true", help="不用复核结果，算复核前的版本")
     args = ap.parse_args()
 
     todo = {r["gid"]: r for r in map(json.loads, open(os.path.join(args.data_dir, "aspect_gold_todo.jsonl")))}
@@ -137,8 +138,16 @@ def main():
         labels[a] = {r["gid"]: r["aspects"] for r in map(json.loads, open(path))} if os.path.exists(path) else {}
     order = [a for a in order if labels[a]]
     gold = merge(labels, order)
+    # 复核过的评论用两人商量后的最终答案（cdt503/scripts/adjudicate_server.py）；原始标注不变
+    adj_path = os.path.join(args.data_dir, "aspect_gold_adjudicated.jsonl")
+    adjudicated = {}
+    if os.path.exists(adj_path) and not args.no_adjudication:
+        adjudicated = {r["gid"]: r["aspects"] for r in map(json.loads, open(adj_path))}
+        gold.update(adjudicated)
+    suffix = "" if adjudicated else "_pre_adjudication"
     gids = sorted(gold)
-    print(f"标注者 {order}；已有人工标注 {len(gids)} / {len(todo)} 条")
+    print(f"标注者 {order}；已有人工标注 {len(gids)} / {len(todo)} 条；复核过 {len(adjudicated)} 条"
+          f"{'' if adjudicated else '（复核前版本）'}")
 
     # —— 组员之间的一致性 ——
     iaa = []
@@ -149,6 +158,9 @@ def main():
                         "aspect_f1": f1([pairs(labels[a][g]) for g in common], [pairs(labels[b][g]) for g in common]),
                         "aspect_name_f1": f1([names(labels[a][g]) for g in common], [names(labels[b][g]) for g in common])})
     iaa_mean = float(np.mean([x["aspect_f1"] for x in iaa])) if iaa else None
+    # 每位标注者和最终答案的吻合程度：复核后能看出每个人原来错了多少
+    vs_final = {a: f1([pairs(gold[g]) for g in sorted(labels[a])], [pairs(labels[a][g]) for g in sorted(labels[a])])
+                for a in order}
 
     # —— 三个模型 vs 人工 ——
     gold_pairs = [pairs(gold[g]) for g in gids]
@@ -184,11 +196,13 @@ def main():
             diffs[f"{a}_minus_{b}"] = bootstrap_diff(gold_pairs, pred_sets[a], pred_sets[b])
 
     os.makedirs(args.out_dir, exist_ok=True)
-    out = {"n_items": len(gids), "annotators": order, "inter_annotator": iaa, "inter_annotator_mean_f1": iaa_mean,
+    out = {"n_items": len(gids), "n_adjudicated": len(adjudicated), "annotators": order, "inter_annotator": iaa,
+           "inter_annotator_mean_f1": iaa_mean, "annotator_vs_final_f1": vs_final,
            "models": results, "f1_diff_ci95": diffs}
-    json.dump(out, open(os.path.join(args.out_dir, "metrics.json"), "w"), ensure_ascii=False, indent=2)
+    json.dump(out, open(os.path.join(args.out_dir, f"metrics{suffix}.json"), "w"), ensure_ascii=False, indent=2)
 
     print(f"\n组员一致性（方面 F1，两两平均）：{iaa_mean if iaa_mean is None else round(iaa_mean, 3)}")
+    print("每位标注者 vs 最终答案：" + "，".join(f"{a} {v:.3f}" for a, v in vs_final.items()))
     for key, label in MODELS:
         if key in results:
             r = results[key]
@@ -210,7 +224,7 @@ def main():
     if iaa_mean is not None:
         tex += ["\\midrule", f"Annotator vs.\\ annotator & -- & {iaa_mean:.3f} & -- & -- \\\\"]
     tex += ["\\bottomrule", "\\end{tabular}"]
-    open(os.path.join(args.out_dir, "human_eval_table.tex"), "w").write("\n".join(tex) + "\n")
+    open(os.path.join(args.out_dir, f"human_eval_table{suffix}.tex"), "w").write("\n".join(tex) + "\n")
 
     # —— 图 1：每个方面的 F1 ——
     if results:
@@ -230,7 +244,7 @@ def main():
         ax.set_ylim(0, 1.0)
         ax.legend(frameon=False, ncol=3, loc="lower center", bbox_to_anchor=(0.5, 1.0))
         ax.grid(axis="y", alpha=0.25)
-        save(fig, args.fig_dir, "human_per_aspect_f1")
+        save(fig, args.fig_dir, f"human_per_aspect_f1{suffix}")
 
     # —— 图 2：学生最常见的错误 ——
     if "student" in preds_by_model:
@@ -246,11 +260,11 @@ def main():
             ax.set_yticks(range(len(items)), [t for t, _, _ in items])
             ax.set_xlabel("Count (student vs. human)")
             ax.grid(axis="x", alpha=0.25)
-            save(fig, args.fig_dir, "human_error_analysis")
+            save(fig, args.fig_dir, f"human_error_analysis{suffix}")
         json.dump({"substitutions": [[a, b, c] for (a, b), c in subs.most_common()],
                    "sentiment_flips": flips.most_common(), "misses": misses.most_common(),
                    "spurious": extras.most_common()},
-                  open(os.path.join(args.out_dir, "error_analysis.json"), "w"), ensure_ascii=False, indent=2)
+                  open(os.path.join(args.out_dir, f"error_analysis{suffix}.json"), "w"), ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

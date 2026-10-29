@@ -1,0 +1,11 @@
+\begin{tabular}{lcccc}
+\toprule
+Model & JSON valid & Aspect F1 (95\% CI) & Aspect-name F1 & Sentiment acc. \\
+\midrule
+Base Qwen3-1.7B & 0.87 & 0.458 (0.39--0.53) & 0.487 & 0.77 \\
+LoRA student (1.7B) & 0.99 & 0.701 (0.64--0.76) & 0.741 & 0.90 \\
+Teacher Qwen3-30B & 1.00 & 0.689 (0.63--0.74) & 0.717 & 0.91 \\
+\midrule
+Annotator vs.\ annotator & -- & 0.644 & -- & -- \\
+\bottomrule
+\end{tabular}

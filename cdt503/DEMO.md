@@ -11,20 +11,20 @@
 
 ## 启动命令
 
-在项目根目录 `~/claude/review-lora` 下运行（`<最优组>` 等第 1 阶段调参结束后填上）：
+在项目根目录 `~/claude/review-lora` 下运行。默认加载第 1 阶段调参选出的最优模型（lr=5e-5，第 240 步）：
 
 ```bash
-uv run python cdt503/app_gradio.py --adapter cdt503/runs/sweep/<最优组>/best --share
+uv run python cdt503/app_gradio.py --share
 ```
 
 - 启动时先加载模型并预热（约 20–30 秒），终端出现 `预热完成` 和网址后才开放网页
 - `--share` 会额外打印一个 `https://xxxx.gradio.live` 公网链接，有效期 1 周
-- 不加 `--adapter` 时默认用第二版的 `adapters_best/`
+- 想换模型时加 `--adapter <目录>`，例如 `--adapter adapters_best`（调参前的第二版模型）
 
 局域网备用方案（`--share` 失败时）：
 
 ```bash
-uv run python cdt503/app_gradio.py --adapter cdt503/runs/sweep/<最优组>/best --host 0.0.0.0
+uv run python cdt503/app_gradio.py --host 0.0.0.0
 ```
 
 查本机 IP，同学在手机浏览器打开 `http://<IP>:7860`：
@@ -42,7 +42,7 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 ## 演示前检查清单
 
 **前一天（在家里）**
-- [ ] 第 1 阶段选出的最优检查点存在：`ls cdt503/runs/sweep/<最优组>/best/`
+- [ ] 最优检查点存在：`ls cdt503/runs/sweep/lr5e-5/best/`（这个目录不在 git 里，换电脑演示要单独拷过去）
 - [ ] 用正式命令启动一次，8 个示例逐个点一遍，确认结果和报告里的截图一致
 - [ ] **试一次 `--share`**：第一次用时 Gradio 要下载一个小程序（frpc），在家里先下好，免得教室网络拦截
 - [ ] 用自己的手机打开公网链接试一次

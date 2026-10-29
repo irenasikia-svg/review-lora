@@ -4,7 +4,7 @@
   uv run python cdt503/app_gradio.py                       # 本机：http://localhost:7860
   uv run python cdt503/app_gradio.py --share               # 生成公网链接，同学用手机打开
   uv run python cdt503/app_gradio.py --host 0.0.0.0        # 同一 Wi-Fi 下用 http://<本机IP>:7860（--share 用不了时的备用方案）
-  uv run python cdt503/app_gradio.py --adapter cdt503/runs/sweep/<最优组>/best
+  uv run python cdt503/app_gradio.py --adapter adapters_best        # 换成别的检查点（默认是调参选出的 lr=5e-5）
   uv run python cdt503/app_gradio.py --mock                # 不加载模型，只看界面（开发用）
 
 设计要点：
@@ -279,7 +279,8 @@ def build_ui(engine, adapter_label):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--adapter", default=os.path.join(ROOT, "adapters_best"))
+    # 默认用第 1 阶段按验证集选出的最优配置（lr=5e-5，第 240 步）
+    ap.add_argument("--adapter", default=os.path.join(ROOT, "cdt503/runs/sweep/lr5e-5/best"))
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=7860)
     ap.add_argument("--share", action="store_true")
