@@ -51,6 +51,9 @@ RUNS = {
     # 验证"r=32 变差是因为更新幅度变大"：mlx-lm 的 scale 是直接乘上去的倍数，相当于标准 LoRA 的 α/r。
     # 基准 r=16、scale=20 即 α=320；保持 α 不变，r=32 应取 320/32=10。如果它追上基准，说明问题出在幅度而不是 rank
     "rank32_scale10": {"rank": 32, "scale": 10.0},
+    # 最终配置（lr=5e-5）换种子再训两次：报告平均值和范围，而不是只报种子 42 那一次
+    "lr5e-5_seed43": {"learning_rate": 5e-5, "seed": 43},
+    "lr5e-5_seed44": {"learning_rate": 5e-5, "seed": 44},
 }
 SMOKE = {"iters": 10, "steps_per_eval": 5, "save_every": 5, "steps_per_report": 5, "val_batches": 2}
 SMOKE_EVAL_LIMIT = 16

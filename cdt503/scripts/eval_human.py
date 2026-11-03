@@ -120,6 +120,60 @@ def save(fig, fig_dir, name):
     print("已保存", os.path.join(os.path.relpath(fig_dir, ROOT), name) + ".{pdf,png}")
 
 
+def fair_comparison(labels, order, preds_by_model, out_dir, n_boot=2000, seed=0):
+    """公平的人机对比：只在两人都标过的评论上，用每个人的原始标注（不用复核结果）当参照。
+
+    这样"模型 vs 人"和"人 vs 人"是同一种比法——都是拿一个人的标注去比另一方，
+    不会出现"模型拿复核后的答案比、人却拿原始标注比"这种不对等。
+    """
+    if len(order) != 2:
+        return None
+    a, b = order
+    common = sorted(set(labels[a]) & set(labels[b]))
+    if not common:
+        return None
+    refs = {a: [pairs(labels[a][g]) for g in common], b: [pairs(labels[b][g]) for g in common]}
+    systems = {f"annotator {b}": [pairs(labels[b][g]) for g in common]}  # B 当"系统"去比 A，比 B 时是自己，跳过
+    for key, label in MODELS:
+        if key in preds_by_model:
+            p = preds_by_model[key]
+            systems[label] = [pairs(p[g]["方面"]) if p.get(g) else set() for g in common]
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(common), (n_boot, len(common)))
+    rows = []
+    for name, sys_sets in systems.items():
+        row = {"system": name}
+        for who in (a, b):
+            if name == f"annotator {who}":
+                continue
+            row[f"vs_{who}"] = f1(refs[who], sys_sets)
+        cols = [k for k in row if k.startswith("vs_")]
+        row["mean"] = float(np.mean([row[k] for k in cols]))
+        # 两个参照的平均 F1 的 95% 区间（按评论重抽样）
+        boots = [np.mean([f1([refs[k[3:]][i] for i in s], [sys_sets[i] for i in s]) for k in cols]) for s in idx]
+        row["mean_ci95"] = [float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))]
+        rows.append(row)
+    out = {"n_shared": len(common), "annotators": [a, b], "rows": rows,
+           "note": "References are each annotator's ORIGINAL labels (before adjudication). "
+                   "The other 80 of 100 reviews were labelled by one annotator only."}
+    os.makedirs(out_dir, exist_ok=True)
+    json.dump(out, open(os.path.join(out_dir, "fair_20.json"), "w"), ensure_ascii=False, indent=2)
+    tex = ["\\begin{tabular}{lccc}", "\\toprule",
+           f"Compared with & Annotator {a} & Annotator {b} & Mean (95\\% CI) \\\\", "\\midrule"]
+    for r in rows:
+        va = f"{r[f'vs_{a}']:.3f}" if f"vs_{a}" in r else "--"
+        vb = f"{r[f'vs_{b}']:.3f}" if f"vs_{b}" in r else "--"
+        tex.append(f"{r['system'].replace('annotator', 'Annotator')} & {va} & {vb} & "
+                   f"{r['mean']:.3f} ({r['mean_ci95'][0]:.2f}--{r['mean_ci95'][1]:.2f}) \\\\")
+    tex += ["\\bottomrule", "\\end{tabular}"]
+    open(os.path.join(out_dir, "fair_20_table.tex"), "w").write("\n".join(tex) + "\n")
+    print(f"\n== 公平对比：{len(common)} 条双人标注的评论，参照 = 各人的原始标注（复核前）")
+    for r in rows:
+        cells = "  ".join(f"vs {w} {r[f'vs_{w}']:.3f}" if f"vs_{w}" in r else f"vs {w}   --  " for w in (a, b))
+        print(f"  {r['system']:22s} {cells}  平均 {r['mean']:.3f} [{r['mean_ci95'][0]:.2f}, {r['mean_ci95'][1]:.2f}]")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default=os.path.join(ROOT, "cdt503/data"))
@@ -127,6 +181,8 @@ def main():
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "cdt503/results/human_eval"))
     ap.add_argument("--fig-dir", default=os.path.join(ROOT, "cdt503/figures"))
     ap.add_argument("--no-adjudication", action="store_true", help="不用复核结果，算复核前的版本")
+    ap.add_argument("--fair-dir", default=os.path.join(ROOT, "cdt503/results/human_eval_fair"),
+                    help="公平人机对比（20 条双人标注）的输出目录")
     args = ap.parse_args()
 
     todo = {r["gid"]: r for r in map(json.loads, open(os.path.join(args.data_dir, "aspect_gold_todo.jsonl")))}
@@ -194,6 +250,9 @@ def main():
     for a, b in [("student", "base"), ("student", "teacher")]:
         if a in pred_sets and b in pred_sets:
             diffs[f"{a}_minus_{b}"] = bootstrap_diff(gold_pairs, pred_sets[a], pred_sets[b])
+    # 公平对比只依赖原始标注，和是否复核无关，所以只在默认（复核后）那次运行里输出一次
+    if adjudicated:
+        fair_comparison(labels, order, preds_by_model, args.fair_dir)
 
     os.makedirs(args.out_dir, exist_ok=True)
     out = {"n_items": len(gids), "n_adjudicated": len(adjudicated), "annotators": order, "inter_annotator": iaa,

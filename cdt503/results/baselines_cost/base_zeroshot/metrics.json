@@ -1,0 +1,17 @@
+{
+  "setting": "base_zeroshot",
+  "model": "mlx-community/Qwen3-1.7B-bf16",
+  "adapter": null,
+  "examples": false,
+  "n": 142,
+  "batch_size": 8,
+  "sec_per_item": 0.7197576274334545,
+  "weights_gb": 3.44114996,
+  "peak_gb": 5.378789916,
+  "total_B": 1.720574976,
+  "active_B": 1.720574976,
+  "JSON合格率": 0.9154929577464789,
+  "整体情感准确率": 0.8873239436619719,
+  "方面F1": 0.5382585751978891,
+  "方面F1_只看方面名": 0.5488126649076518
+}

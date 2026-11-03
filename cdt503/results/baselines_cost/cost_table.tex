@@ -1,0 +1,10 @@
+\begin{tabular}{lcccccc}
+\toprule
+Setting & Params (total/active) & Peak mem. & s/review & JSON & Sent. & Aspect-F1 \\
+\midrule
+Teacher 30B-A3B, 4-shot & 30.5B / 3.3B & 19.8 GB & 1.37 & 1.000 & 1.000 & 0.984$^*$ \\
+Base 1.7B, zero-shot & 1.7B / 1.7B & 5.4 GB & 0.72 & 0.915 & 0.887 & 0.538 \\
+Base 1.7B, 4-shot & 1.7B / 1.7B & 5.8 GB & 0.75 & 0.915 & 0.880 & 0.594 \\
+LoRA student 1.7B & 1.7B / 1.7B & 5.7 GB & 0.75 & 1.000 & 0.979 & 0.802 \\
+\bottomrule
+\end{tabular}

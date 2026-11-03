@@ -1,0 +1,17 @@
+{
+  "setting": "lora",
+  "model": "mlx-community/Qwen3-1.7B-bf16",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5/best",
+  "examples": false,
+  "n": 142,
+  "batch_size": 8,
+  "sec_per_item": 0.7491379136770544,
+  "weights_gb": 3.510880264,
+  "peak_gb": 5.661446952,
+  "total_B": 1.738007552,
+  "active_B": 1.738007552,
+  "JSON合格率": 1.0,
+  "整体情感准确率": 0.9788732394366197,
+  "方面F1": 0.801670146137787,
+  "方面F1_只看方面名": 0.8225469728601252
+}

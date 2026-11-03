@@ -1,0 +1,49 @@
+{
+  "n_shared": 20,
+  "annotators": [
+    "A",
+    "B"
+  ],
+  "rows": [
+    {
+      "system": "annotator B",
+      "vs_A": 0.6436781609195402,
+      "mean": 0.6436781609195402,
+      "mean_ci95": [
+        0.48978506296135477,
+        0.7837837837837838
+      ]
+    },
+    {
+      "system": "Base Qwen3-1.7B",
+      "vs_A": 0.3380281690140845,
+      "vs_B": 0.5,
+      "mean": 0.41901408450704225,
+      "mean_ci95": [
+        0.25341372025030995,
+        0.5585487741262386
+      ]
+    },
+    {
+      "system": "LoRA student (1.7B)",
+      "vs_A": 0.627906976744186,
+      "vs_B": 0.6933333333333334,
+      "mean": 0.6606201550387597,
+      "mean_ci95": [
+        0.5385840700220211,
+        0.764947717723453
+      ]
+    },
+    {
+      "system": "Teacher Qwen3-30B",
+      "vs_A": 0.6590909090909091,
+      "vs_B": 0.7272727272727273,
+      "mean": 0.6931818181818181,
+      "mean_ci95": [
+        0.5779646599406192,
+        0.7947391752983859
+      ]
+    }
+  ],
+  "note": "References are each annotator's ORIGINAL labels (before adjudication). The other 80 of 100 reviews were labelled by one annotator only."
+}

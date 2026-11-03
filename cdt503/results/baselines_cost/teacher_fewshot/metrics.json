@@ -1,0 +1,17 @@
+{
+  "setting": "teacher_fewshot",
+  "model": "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit",
+  "adapter": null,
+  "examples": true,
+  "n": 142,
+  "batch_size": 8,
+  "sec_per_item": 1.371522520629453,
+  "weights_gb": 17.18094644,
+  "peak_gb": 19.805866708,
+  "total_B": 30.5,
+  "active_B": 3.3,
+  "JSON合格率": 1.0,
+  "整体情感准确率": 1.0,
+  "方面F1": 0.9835390946502057,
+  "方面F1_只看方面名": 0.9835390946502057
+}
