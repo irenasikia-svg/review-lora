@@ -39,5 +39,6 @@ sh ~/claude/review-lora/cdt503/report/make_texpage_zip.sh
 | 表 V 调参 | 数字来自 `results/sweep/sweep_table.csv`；两行 seed 43/44 复跑来自 `results/final_test_seeds/summary.json` | `cdt503/scripts/plot_sweep.py`、`cdt503/scripts/seed_summary.py` |
 | 表 VI 人工评估 | 数字来自 `results/human_eval/metrics.json` | `cdt503/scripts/eval_human.py` |
 | 表 VII 公平人机对比 | 数字来自 `results/human_eval_fair/fair_20.json` | `cdt503/scripts/eval_human.py` |
+| III-E 商品报告的数字（93–96%、71/35、43/38 等） | `results/product_report/{hotel,tablet,fruit}/summary.json` | `cdt503/scripts/product_report_samples.py` |
 
 表格里的数字是手写进 `main.tex` 的（方便在 TeXPage 上单独编译），如果重新跑了实验，要对照上面的文件手动更新。

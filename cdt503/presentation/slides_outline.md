@@ -68,6 +68,7 @@
 
 ### Slide 8 — Live demo (A operates, B narrates, 1:20)
 - 见 `demo_script.md`。屏幕上只放 Gradio 页面，旁边放二维码
+- 顺序：单条对比两个例子（原始模型出错 vs. 微调后正确）→ 切到提前生成好的 Hotel 商品报告（好评 53% vs. 星级 55%；最多被抱怨的是房间设施、服务）→ 请同学扫码
 - [如果现场出问题，第 15 秒内切换到备用视频，不要现场调试]
 
 ### Slide 9 — Challenges & conclusion (A 0:25 + B 0:20)

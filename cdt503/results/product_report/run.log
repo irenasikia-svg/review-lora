@@ -1,0 +1,45 @@
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 2460.96it/s]
+已加载 mlx-community/Qwen3-1.7B-bf16 + cdt503/runs/sweep/lr5e-5/best
+  8/150  1.2 条/秒
+  48/150  1.2 条/秒
+  88/150  1.3 条/秒
+  128/150  1.3 条/秒
+
+hotel：150 条，117 秒；好评 53%（星级 55%），整体判断与星级一致 93%，不合格输出 0
+  最受好评：Room & facilities 53、Location 45、Service 37
+  最常被抱怨：Room & facilities 71、Service 35、Price 24
+  Room & facilities      提及 124  +53 / -71
+  Service                提及  72  +37 / -35
+  Location               提及  54  +45 / -9
+  Price                  提及  43  +19 / -24
+  Performance            提及  11  +5 / -6
+  Taste                  提及   6  +4 / -2
+  8/150  1.3 条/秒
+  48/150  1.4 条/秒
+  88/150  1.4 条/秒
+  128/150  1.5 条/秒
+
+tablet：150 条，102 秒；好评 49%（星级 50%），整体判断与星级一致 96%，不合格输出 1
+  最受好评：Performance 54、Logistics 13、Price 10
+  最常被抱怨：Performance 33、Defect 16、Service 15
+  Performance            提及  87  +54 / -33
+  Price                  提及  21  +10 / -11
+  Logistics              提及  20  +13 / -7
+  Defect                 提及  17  +1 / -16
+  Service                提及  17  +2 / -15
+  Gifts & accessories    提及  15  +1 / -14
+  8/150  1.3 条/秒
+  48/150  1.4 条/秒
+  88/150  1.4 条/秒
+  128/150  1.4 条/秒
+
+fruit：150 条，106 秒；好评 41%（星级 45%），整体判断与星级一致 95%，不合格输出 0
+  最受好评：Taste 45、Logistics 25、Price 13
+  最常被抱怨：Defect 43、Size & weight 38、Taste 33
+  Taste                  提及  78  +45 / -33
+  Defect                 提及  45  +2 / -43
+  Size & weight          提及  42  +4 / -38
+  Logistics              提及  34  +25 / -9
+  Price                  提及  27  +13 / -14
+  Service                提及  14  +3 / -11
+exit=0

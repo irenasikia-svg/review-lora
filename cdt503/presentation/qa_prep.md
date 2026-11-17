@@ -1,7 +1,7 @@
-# 问答准备：21 个可能被问到的问题
+# 问答准备：22 个可能被问到的问题
 
 每题：**英文回答**（30 秒内能说完）+ 中文解释（帮你们理解，不用背）。
-按主题分组；建议 Han Daiyuan 主答 1–10（数据、方法），Li Mingtai 主答 11–21（训练、结果、部署），另一位补充。
+按主题分组；建议 Han Daiyuan 主答 1–10（数据、方法），Li Mingtai 主答 11–22（训练、结果、部署），另一位补充。
 
 不会的题：先承认，再说你知道的相关部分——"We didn't test that directly, but what we did see is …"。不要编数字。
 
@@ -120,6 +120,11 @@
 
 中文：做过这个对照（少样本提示）：原始模型给 4 个示例，验证集 F1 只从 0.538 到 0.594，格式错误率还是 8.5%；LoRA 是 0.802、零错误，而且推理成本一样。
 
+**22. Could a merchant point this at a product page and get a report?**
+> The second demo tab does the report part: paste reviews or upload a CSV, and it returns the positive share, the most praised and most criticised aspects with customers' own words, a chart and a CSV. On 150 hotel reviews it had never seen, it found 53% positive against 55% by star rating, and agreed with the rating on 93% of individual reviews; 150 reviews take about two minutes. We deliberately don't scrape shop pages: they need logins and anti-bot checks, and their terms forbid it. The natural input is the merchant's own exported reviews.
+
+中文：第二个标签页就是做报告的：粘贴或上传评论，给出好评率、最受好评/最常被抱怨的方面和原文、图表、CSV。酒店 150 条没见过的评论：好评 53%（星级 55%），逐条一致 93%，约 2 分钟。不做网页抓取：要登录、有反爬虫、平台条款禁止；正常用法是商家导出自己的评论。三个样例的一致率是 93–96%。
+
 ---
 
 ## 关键数字速查（被追问时用）
@@ -140,6 +145,7 @@
 | 参数（老师 vs 学生） | 总 30.5B vs 1.74B（18×），激活 3.3B vs 1.74B（1.9×） |
 | 训练次数 | 最终配置 3 个种子（42/43/44，验证+测试）；默认配置 2 个（第二个只看验证集）；其余单种子 |
 | 种子波动（验证集） | 默认 0.747–0.758；最终配置 0.788–0.807 → 噪声约 0.02 以内 |
+| 商品报告（150 条样例） | 酒店 好评 53%（星级 55%），一致 93%；平板 49%（50%），96%；水果 41%（45%），95%；150 条约 2 分钟 |
 | lr 2e-4 | 第 40 步发散，验证损失 2.6 → 7.1 |
 | r=32 | 0.697 → scale 改 10 后 0.766 |
 | 只训练顶部 8 层 | 0.749，训练 46 分钟 |

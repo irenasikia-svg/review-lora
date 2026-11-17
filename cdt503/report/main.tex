@@ -37,8 +37,8 @@ $[+0.038, +0.110]$; 0.790--0.807 across three training seeds), versus 0.513 for 
 examples instead helps far less (validation F1 0.538 $\rightarrow$ 0.594, vs.\ 0.802 for LoRA). On 100 never-used reviews
 labelled by two group members, the student is statistically indistinguishable from the teacher (0.701 vs.\ 0.689
 aspect-F1) with 18$\times$ fewer total parameters (under 2$\times$ fewer active ones), about 5$\times$ less weight memory
-and 1.8$\times$ the speed. A Gradio demo shows the base and fine-tuned outputs side by side and survived a 12-user
-concurrency test.
+and 1.8$\times$ the speed. A Gradio demo shows the base and fine-tuned outputs side by side, survived a 12-user
+concurrency test, and turns a batch of reviews into a per-aspect product report.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -47,6 +47,7 @@ aspect-based sentiment analysis, LoRA, knowledge distillation, parameter-efficie
 
 % =====================================================================
 \section{Introduction and Problem Setup}
+\label{sec:intro}
 
 Star ratings tell a merchant \emph{whether} customers are happy, but not \emph{why}. A review such as
 ``\textit{the hotel is close to the metro, but the room has poor sound insulation and check-in took half an hour}''
@@ -388,6 +389,14 @@ memory. The page explains \emph{why} an invalid output cannot be used (e.g.\ ``a
 list'') and highlights extracted opinions in the review. On five of its eight built-in examples the base model's output is
 invalid while the student's is correct. A dedicated inference thread, a request queue and a warm-up pass make it robust:
 12 simultaneous clients all succeeded, at $\approx$4\,s per request.
+
+A second tab turns the extractor into the merchant-facing summary motivated in Sec.~\ref{sec:intro}. Given up to 300 pasted or
+uploaded reviews, it aggregates the per-review records into the positive share, the most praised and most criticised
+aspects, per-aspect counts with example opinions, a chart and a downloadable CSV; 150 reviews take about 2 minutes.
+On three built-in samples of 150 never-used reviews (hotel, tablet, fruit), the overall verdict agrees with the star
+rating on 93--96\% of reviews, and the positive share is within 4 points of the ratings' (the dataset is balanced by
+construction, so only this agreement is informative). The complaints are specific: Room \& facilities (71 negative
+mentions) and Service (35) for the hotel, Defect (43) and Size \& weight (38) for the fruit.
 
 \begin{figure}[t]
 \centering
