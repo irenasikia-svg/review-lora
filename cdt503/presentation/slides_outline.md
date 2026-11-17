@@ -52,16 +52,18 @@
 ### Slide 6 — Systematic hyper-parameter study (B, 1:10)
 - **Visual:** the bar chart (Fig. 2 bottom) with the grey seed band
 - Three findings, one line each:
-  1. **Learning rate matters most:** 5e-5 best (0.793); 2e-4 diverged within 40 steps
+  1. **Learning rate matters most:** 5e-5 best (0.793); 2e-4 (constant, no warm-up) diverged within 40 steps
   2. **Bigger rank is *not* better** — r=32 fell to 0.697, but fixing the scale (α constant) brought it back to 0.766 → it was the update size, not the rank
   3. **Top-8 layers only:** same quality, half the training time
-- **Say:** "The grey band is what randomness alone does — we ran the default twice with different seeds. Anything inside the band we treat as noise."
+- **Say:** "The grey band is what randomness alone does — we ran the default twice with different seeds. Anything inside the band we treat as noise, and since the validation set is small, we only trust big differences."
 - [这一页对应"系统调参并附对比图"，是 Level 2 的关键，讲慢一点]
 
 ### Slide 7 — Results (B, 1:00)
 - Left: **test set (262)** — aspect-F1 0.513 → 0.734 → **0.807**; JSON validity 90.8% → 100%; tuning adds +0.073 (95% CI +0.038 to +0.110)
-- Right: **100 never-used reviews, labelled by us two** — student 0.701 ≈ teacher 0.689 (not significantly different), base 0.458
-- **Say:** "A model 17 times smaller matches the teacher when judged by humans. And it agrees with humans about as well as we two agreed with each other before discussing."
+- Right: **100 never-used reviews, labelled by us two** — student 0.701 vs teacher 0.689 (not significantly different), base 0.458
+- Small line under the table: few-shot prompting the base model only reaches 0.594 (validation); teacher needs ~5× the weight memory and is 1.8× slower
+- **Say:** "Judged by humans, our student and the 30B teacher are statistically indistinguishable — but the student needs about a fifth of the memory. And simply giving the small model a few examples is not enough: that only gets to 0.59."
+- [不要说"小 17 倍"：总参数 18 倍，但老师是混合专家，激活参数只差不到 2 倍。也不要说"达到人类水平"：公平对比只有 20 条，区间重叠]
 
 ### Slide 8 — Live demo (A operates, B narrates, 1:20)
 - 见 `demo_script.md`。屏幕上只放 Gradio 页面，旁边放二维码
@@ -69,7 +71,7 @@
 
 ### Slide 9 — Challenges & conclusion (A 0:25 + B 0:20)
 - A — challenges, one line each: overfitting (best checkpoint never the last one) · ambiguous labels · GPU out-of-memory with teacher + demo · long prompt slowed inference 0.34 → 0.58 s
-- B — conclusion: "1.7B student, 1.8k teacher-labelled reviews, one laptop: 100% valid JSON and teacher-level quality. The lessons were mostly about data: a clear schema, a quality filter, and honest evaluation on unseen data. Thank you — questions?"
+- B — conclusion: "1.7B student, 1.8k teacher-labelled reviews, one laptop: 100% valid JSON, and statistically indistinguishable from the teacher at a fifth of its memory. The lessons were mostly about data: a clear schema, a quality filter, and honest evaluation on unseen data. Thank you — questions?"
 
 ---
 

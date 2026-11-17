@@ -34,9 +34,12 @@ teacher (Qwen3-30B-A3B) labels 2{,}425 real reviews under a written annotation g
 contradict the review's human star rating are filtered out, and a 1.7B student (Qwen3-1.7B) is fine-tuned with LoRA on
 an Apple-silicon laptop using MLX. A one-factor-at-a-time sweep over rank, learning rate and adapted layers (10 runs,
 selected on validation data only) raises test aspect-F1 from 0.734 to 0.807 ($+0.073$, 95\% bootstrap CI
-$[+0.038, +0.110]$), versus 0.513 for the untuned base model. On 100 never-used reviews labelled by two group members,
-the student matches the teacher (0.701 vs.\ 0.689 aspect-F1, difference not significant) while being 17$\times$
-smaller. A Gradio demo shows the base and fine-tuned outputs side by side and survived a 12-user concurrency test.
+$[+0.038, +0.110]$), versus 0.513 for the untuned base model; showing the base model the teacher's four worked
+examples instead helps far less (validation F1 0.538 $\rightarrow$ 0.594, vs.\ 0.802 for LoRA). On 100 never-used reviews
+labelled by two group members, the student is statistically indistinguishable from the teacher (0.701 vs.\ 0.689
+aspect-F1) with 18$\times$ fewer total parameters (under 2$\times$ fewer active ones), about 5$\times$ less weight memory
+and 1.8$\times$ the speed. A Gradio demo shows the base and fine-tuned outputs side by side and survived a 12-user
+concurrency test.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -108,7 +111,7 @@ a Gradio demo that keeps a single model in memory and switches the adapter on an
 \subsection{Knowledge distillation with a quality filter}
 Following the idea of transferring a large model's behaviour into a small one~\cite{hinton2015distilling,hsieh2023distilling}
 and the finding that LLMs can be cost-effective annotators~\cite{gilardi2023chatgpt}, we use
-Qwen3-30B-A3B~\cite{qwen3} (4-bit, mixture-of-experts with 3B active parameters) as the teacher. Its prompt contains the
+Qwen3-30B-A3B~\cite{qwen3} (4-bit, mixture-of-experts: 30.5B parameters, 3.3B active per token) as the teacher. Its prompt contains the
 16 aspect definitions, nine disambiguation rules (e.g.\ ``lag or short battery life $\rightarrow$ Performance;
 crashes or dead on arrival $\rightarrow$ Defect'') and four worked examples. Labelling the 2{,}425 reviews took
 $\approx$50\,min.
@@ -180,7 +183,16 @@ Selection & lowest validation loss (checkpoint every 40 steps) \\
 Table~\ref{tab:main} compares the untuned base model, LoRA with the default configuration, and LoRA with the tuned
 learning rate. Fine-tuning fixes the format problem completely (90.8\%$\rightarrow$100\% valid JSON) and raises
 aspect-F1 by 0.220 (CI $[+0.164, +0.277]$); tuning adds a further 0.073 (CI $[+0.038, +0.110]$). Inference cost is
-unchanged at $\approx$0.6\,s per review (batched).
+unchanged at $\approx$0.6\,s per review (batched). These intervals capture only \emph{which test reviews were sampled}:
+each model was trained once (seed 42), and retraining the default configuration with another seed moved validation F1
+by 0.011 (Sec.~\ref{sec:sweep}), so the uncertainty of the tuning gain is larger than its interval suggests.
+
+\textbf{Few-shot prompting and cost.} Table~\ref{tab:cost} compares the alternatives on the validation split under
+identical conditions. Showing the base model the teacher's four worked examples raises aspect-F1 only from 0.538 to 0.594
+and leaves its 8.5\% invalid outputs unchanged; LoRA reaches 0.802 with no invalid output. The teacher has 17.5$\times$
+more parameters than the student, but as a mixture-of-experts model it activates only 3.3B per token, 1.9$\times$ the
+student's 1.74B. Its weights take 17.2\,GB versus 3.5\,GB (4.9$\times$; peak memory during generation 19.8 vs.\
+5.7\,GB, 3.5$\times$), and it is 1.8$\times$ slower per review.
 
 \begin{table}[t]
 \centering
@@ -198,12 +210,35 @@ LoRA, tuned ($\text{lr}=5{\times}10^{-5}$) & \textbf{1.000} & \textbf{0.969} & \
 \end{tabular}
 \end{table}
 
+\begin{table}[t]
+\centering
+\caption{Few-shot baseline and inference cost on the validation split (142 reviews, batch size 8, Apple M5).
+$^*$Scored against the teacher's own labels, so not comparable. Batched decoding differs slightly across batch
+sizes, hence LoRA's 0.802 here vs.\ 0.793 in Table~\ref{tab:sweep} (batch 16).}
+\label{tab:cost}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lccccc}
+\toprule
+Setting & Params, B & Mem., GB & s/rev. & JSON & Asp.\ F1 \\
+ & tot./act. & wts/peak & & & \\
+\midrule
+Teacher, 4-shot & 30.5/3.3 & 17.2/19.8 & 1.37 & 1.000 & 0.984$^*$ \\
+Base 1.7B, 0-shot & 1.72/1.72 & 3.4/5.4 & 0.72 & 0.915 & 0.538 \\
+Base 1.7B, 4-shot & 1.72/1.72 & 3.4/5.8 & 0.75 & 0.915 & 0.594 \\
+LoRA student & 1.74/1.74 & 3.5/5.7 & 0.75 & \textbf{1.000} & \textbf{0.802} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Systematic hyper-parameter study}
+\label{sec:sweep}
 We varied one factor at a time around the default: rank $r\in\{4,8,16,32\}$, learning rate
 $\in\{5{\times}10^{-5},10^{-4},2{\times}10^{-4}\}$ and the number of adapted (top) layers $\in\{8,16,28\}$, plus two
 diagnostic runs: the default with a different random seed, and $r=32$ with $s=10$ (Table~\ref{tab:sweep},
 Fig.~\ref{fig:sweep}). The seed run tells us how much a score moves by chance alone: validation aspect-F1 0.747 vs.\
-0.758, so we treat differences below $\approx$0.01 as noise.
+0.758, so we treat differences below $\approx$0.01 as noise. Because the validation split has only 142 reviews,
+even somewhat larger differences may partly reflect which reviews it happens to contain, so we draw conclusions only
+from large effects.
 
 \begin{table}[t]
 \centering
@@ -239,7 +274,8 @@ configuration, i.e.\ what chance alone can explain.}
 \end{figure*}
 
 \textbf{Learning rate matters most.} Halving it to $5\times10^{-5}$ gives the lowest validation loss (0.115) and the
-best F1 (0.793, $+0.035$, three times the seed spread); doubling it to $2\times10^{-4}$ diverges within 40 steps
+best F1 (0.793, $+0.035$, three times the seed spread); doubling it to $2\times10^{-4}$---with a constant learning
+rate and no warm-up---diverges within 40 steps
 (validation loss jumps from 2.6 to 7.1 and the model emits repeated punctuation), never recovering.
 
 \textbf{Larger rank is not better---because of the scale.} $r=32$ is clearly worse (0.697). Since MLX-LM multiplies the
@@ -267,20 +303,23 @@ checkpoints selected by validation loss.}
 The test split has two weaknesses: its reference labels come from the teacher, and it only contains reviews where the
 teacher agreed with the human sentiment label (an ``easier'' subset). We therefore drew 100 reviews that had never been
 used anywhere (10 per category, balanced by sentiment) and two group members labelled them with a purpose-built web tool
-that hides all model outputs. Twenty reviews were labelled by both; their agreement was modest (aspect-F1 0.644), so the
-two annotators jointly adjudicated the 20 disagreeing or contradictory items. Afterwards each annotator's original labels
-reached 0.907 and 0.943 F1 against the final labels.
+that hides all model outputs. Twenty reviews were labelled by both annotators; the other 80 by one annotator only.
+Agreement on the shared 20 was modest (aspect-F1 0.644), so the two annotators jointly adjudicated the 20 disagreeing or
+contradictory items; afterwards each annotator's original labels reached 0.907 and 0.943 F1 against the final labels.
 
 Table~\ref{tab:human} shows that the student clearly beats its base model ($+0.24$, CI $[+0.18, +0.31]$) and is
-statistically indistinguishable from the 17$\times$ larger teacher (difference CI $[-0.05, +0.07]$). Its agreement with
-humans (0.701) is at the level of human--human agreement before adjudication (0.644), suggesting the remaining errors are
-largely due to genuine ambiguity in the task. Sentiment accuracy is lower than on the test split (0.90 vs.\ 0.97), which
-confirms that the filtered test set is easier than real-world data.
+statistically indistinguishable from the teacher (difference CI $[-0.05, +0.07]$). Sentiment accuracy is lower than on
+the test split (0.90 vs.\ 0.97), which confirms that the filtered test set is easier than real-world data.
+
+To compare models with human agreement like for like, Table~\ref{tab:fair} scores every system against each annotator's
+\emph{original} labels on the 20 shared reviews. Annotator B agrees with A at 0.644; the student reaches 0.661 on
+average, the teacher 0.693 and the base model 0.419. With only 20 reviews the intervals are wide and overlap, so we
+cannot tell whether the models are above, at or below human agreement---only that both are far above the base model.
 
 \begin{table}[t]
 \centering
-\caption{Evaluation against adjudicated human labels on 100 unseen reviews. $^\dagger$On the 20 reviews labelled by
-both annotators, before adjudication.}
+\caption{Evaluation against adjudicated human labels on 100 unseen reviews (20 labelled by both annotators, 80 by
+one).}
 \label{tab:human}
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{lccc}
@@ -290,8 +329,24 @@ Model & JSON valid & Sent.\ acc. & Aspect-F1 (95\% CI) \\
 Base Qwen3-1.7B & 0.87 & 0.77 & 0.458 (0.389--0.528) \\
 LoRA student (1.7B) & 0.99 & 0.90 & \textbf{0.701} (0.641--0.761) \\
 Teacher (30B-A3B) & 1.00 & 0.91 & 0.689 (0.631--0.744) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Like-for-like agreement on the 20 reviews labelled by both annotators: aspect-F1 of each system against each
+annotator's original (pre-adjudication) labels.}
+\label{tab:fair}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\toprule
+Compared with & Annotator A & Annotator B & Mean (95\% CI) \\
 \midrule
-Annotator A vs.\ B$^\dagger$ & -- & -- & 0.644 \\
+Annotator B & 0.644 & -- & 0.644 (0.49--0.78) \\
+Base Qwen3-1.7B & 0.338 & 0.500 & 0.419 (0.25--0.56) \\
+LoRA student (1.7B) & 0.628 & 0.693 & 0.661 (0.54--0.76) \\
+Teacher (30B-A3B) & 0.659 & 0.727 & 0.693 (0.58--0.79) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -314,7 +369,7 @@ flips, and aspect substitutions (human $\rightarrow$ student).}
 
 \textbf{Error analysis} (Figs.~\ref{fig:human} and~\ref{fig:errors}). The student's most common errors are missing Build \& material (e.g.\
 ``the colour runs badly after washing'' labelled only as Performance) and adding a spurious Authenticity aspect when a
-customer writes ``this is cheating consumers''. Both reflect boundaries that also confused the human annotators. Rare
+customer writes ``this is cheating consumers''. Rare
 aspects (Location, Packaging, Authenticity, $n\le4$) have unreliable per-aspect scores.
 
 \subsection{Interactive prototype}
@@ -355,14 +410,19 @@ out-of-memory), so heavy jobs are now scheduled one at a time and every long job
 much shorter prompt is a promising optimisation. MLX also binds computation to the thread that loaded the model, which
 crashed our first multi-threaded web server and motivated the dedicated inference thread.
 
-\textbf{Limitations.} The test reference is teacher-generated; the human set has only 100 reviews; the sweep varies one
-factor at a time with a single seed per configuration, so interactions (e.g.\ lr $5\times10^{-5}$ with $r=4$) are
-untested.
+\textbf{Limitations.} The test reference is teacher-generated. Each configuration, including the final one, was
+trained once, so reported intervals reflect test-sample variation only. Of the 100 human-labelled reviews, 80 have a
+single annotator and only 20 support the human--model comparison. The sweep varies one factor at a time on a 142-review
+validation set, so interactions (e.g.\ lr $5\times10^{-5}$ with $r=4$) are untested.
 
 \textbf{Conclusion.} A 1.7B model fine-tuned with LoRA on 1.8k teacher-labelled reviews, using only a laptop, produces
-valid structured output 99--100\% of the time and matches a 17$\times$ larger teacher against human judgement.
+valid structured output 99--100\% of the time and is statistically indistinguishable from its teacher against human
+judgement, with about a fifth of the teacher's weight memory.
 Systematic tuning added 7 F1 points, and the clearest lessons were about data: a precise label schema, a quality filter,
 and honest evaluation on data no model has seen.
+
+\textbf{Use of AI tools.} An AI coding assistant (Claude Code) was used to write and debug code and to draft
+documentation and parts of this report; all design decisions, annotations and final checks were made by the authors.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}

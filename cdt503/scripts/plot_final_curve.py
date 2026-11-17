@@ -36,8 +36,10 @@ def main():
     # 前 30 步的训练损失很大（> 1），截掉才能看清后面的差别
     ax.set_ylim(0, 0.30)
     ax.axvline(228, color="#bbbbbb", lw=0.6)
-    ax.annotate("epoch 2 begins:\ntraining loss halves,\nvalidation flat", (232, 0.27), fontsize=6.5,
-                color="#666666", va="top")
+    # 说明文字放在两条"best step"虚线之间、所有曲线上方的空白处，用箭头指向第 1 轮分界线（228 步）
+    ax.annotate("epoch 2 begins:\ntrain loss halves,\nval. loss flat", xy=(229, 0.24), xytext=(320, 0.255),
+                fontsize=6.3, color="#666666", ha="center", va="center",
+                arrowprops=dict(arrowstyle="->", color="#999999", lw=0.6))
     ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2)
     ax.grid(alpha=0.25)
     fig.tight_layout()
