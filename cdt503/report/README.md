@@ -34,9 +34,9 @@ sh ~/claude/review-lora/cdt503/report/make_texpage_zip.sh
 | 图 2 调参对比 | `figures/sweep_val_curves.pdf`、`sweep_metrics.pdf` | `cdt503/scripts/plot_sweep.py` |
 | 图 3 损失曲线 | `figures/final_loss_curve.pdf` | `cdt503/scripts/plot_final_curve.py` |
 | 图 4、5 人工评估 | `figures/human_per_aspect_f1.pdf`、`human_error_analysis.pdf` | `cdt503/scripts/eval_human.py` |
-| 表 III 测试集 | 数字来自 `results/final_test/summary.json` | `cdt503/scripts/final_test_summary.py` |
+| 表 III 测试集 | 原始、默认两行来自 `results/final_test/summary.json`；调参后一行（3 个种子平均和范围）来自 `results/final_test_seeds/summary.json` | `cdt503/scripts/final_test_summary.py`、`cdt503/scripts/seed_summary.py` |
 | 表 IV 少样本对照和成本 | 数字来自 `results/baselines_cost/summary.json` | `cdt503/scripts/baselines_and_cost.py` |
-| 表 V 调参 | 数字来自 `results/sweep/sweep_table.csv` | `cdt503/scripts/plot_sweep.py` |
+| 表 V 调参 | 数字来自 `results/sweep/sweep_table.csv`；两行 seed 43/44 复跑来自 `results/final_test_seeds/summary.json` | `cdt503/scripts/plot_sweep.py`、`cdt503/scripts/seed_summary.py` |
 | 表 VI 人工评估 | 数字来自 `results/human_eval/metrics.json` | `cdt503/scripts/eval_human.py` |
 | 表 VII 公平人机对比 | 数字来自 `results/human_eval_fair/fair_20.json` | `cdt503/scripts/eval_human.py` |
 

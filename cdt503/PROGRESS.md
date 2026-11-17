@@ -1,4 +1,4 @@
-# CDT503 项目进度交接（2026-11-17 22:30）
+# CDT503 项目进度交接（2026-11-18 更新）
 
 新开对话时先读这份文件。项目在 `~/claude/review-lora`，分支 `cdt503`（GitHub: irenasikia-svg/review-lora，公开仓库）。
 组员：Han Daiyuan (3231363) = 标注者 A，Li Mingtai (3231959) = 标注者 B。项目标题：**Beyond Star Ratings: Aspect Extraction from Chinese Reviews**。
@@ -13,26 +13,15 @@
 
 ## 正在跑的
 
-**B3 多种子重复**（lr=5e-5 最终配置，种子 43、44），2026-11-17 22:22 启动，预计 **01:45 左右**结束：
-
-```bash
-caffeinate -s sh -c 'uv run python cdt503/scripts/sweep.py --only lr5e-5_seed43 lr5e-5_seed44 && uv run python cdt503/scripts/seed_summary.py --eval-test'
-```
-
-- 日志：`cdt503/results/sweep/sweep.log`（每组完成一行）、`cdt503/results/sweep/night3.out`（末尾出现第 2 个 `exit=` 即全部结束）
-- 22:10 第一次启动时，因为同时开了真实模型的 Gradio 报告页，两组都 GPU 内存不足崩了（第 40 步前，没有检查点，没损失）；22:22 单独重跑
-- 如果中途断了：重新运行上面的命令即可续跑
-- **跑完前不要开 Gradio、演示服务器、标注服务器或 countdown-grpo**
+没有。B3 已于 2026-11-18 01:45 跑完（两组都正常结束，没再崩）。
 
 ## 接下来要做的（按顺序）
 
-1. **B3 收尾**：确认 `sweep.log` 里两组都"完成"，`cdt503/results/final_test_seeds/summary.json` 有 3 个种子的验证集和测试集结果
-   - 改报告 `cdt503/report/main.tex`：表 III 调参后那一行改成"3 个种子的平均值（最小–最大）"；主结果段落里"each model was trained once (seed 42)"那段改成多种子说法；局限性里"Each configuration, including the final one, was trained once"改成"除最终配置外"
-   - 同步 `cdt503/presentation/qa_prep.md` 的 Q10、速查表；`slides_outline.md` 第 7 页
-   - 重新编译（`cd cdt503/report && tectonic main.tex`），用 pypdfium2 渲染逐页检查，确认 ≤ 6 页
-   - 提交种子结果（`results/sweep/lr5e-5_seed4{3,4}/`、`results/final_test_seeds/`、`sweep.log`、`night3.out`）
+1. ~~B3 收尾~~ **已完成**（11-18）：报告表 III 调参后一行改成 3 个种子平均 0.801（0.790–0.807），表 V 加了 seed 43/44 两行，
+   主结果、调参噪声阈值（0.01 → 0.02）、学习率段落、局限性、结论、摘要都同步改了；qa_prep Q9/Q10/Q13/Q14 和速查表、slides 第 6/7 页已同步；
+   重新编译仍是 6 页
 2. **商品报告页**（已完成、已实测，见下）：问用户要不要写进报告第 III-E 节（一两句 + 可选截图）和 PPT 演示脚本
-3. **推送**：本地有未推送的提交（`0582841` 商品报告页，以及之后的），推送前问用户
+3. **推送**：B3 收尾的提交还没推，推送前问用户
 4. **用户自己做的**：
    - 演示截图存 `cdt503/figures/demo_screenshot.png`（页面现在有两个标签页，截"Compare one review"页的第 1 个示例"果子特别棒……"），然后重新编译、检查第 5–6 页
    - 在家试 `--share`、录备用视频（步骤见 `cdt503/DEMO.md`）
@@ -45,6 +34,7 @@ caffeinate -s sh -c 'uv run python cdt503/scripts/sweep.py --only lr5e-5_seed43 
 |---|---|
 | 调参（10 组，验证集） | lr=5e-5 最好 0.793；lr=2e-4 发散；r=32 变差，scale 降到 10 后恢复（0.766）；顶部 8 层训练时间减半 |
 | 测试集（262 条，每个模型一次） | 原始 0.513 → 默认 LoRA 0.734 → 调参后 0.807；调参 +0.073，95% 区间 [+0.038, +0.110] |
+| B3 多种子（最终配置 seed 42/43/44） | 验证 0.793 / 0.788 / 0.807（平均 0.796）；测试 0.807 / 0.790 / 0.805（平均 0.801），每个种子都比默认高 ≥ 0.056；报告的 seed 42 刚好是测试最高的 |
 | 人工评估（100 条全新评论，2 人标注 + 仲裁） | 学生 0.701、老师 0.689、原始 0.458；学生和老师无显著差异 |
 | B1 公平对比（20 条双人标注） | 组员 B 0.644、学生 0.661、老师 0.693、原始 0.419（区间重叠，不说"达到人类水平"） |
 | B2 少样本（验证集） | 原始 0.538 → 给 4 个示例 0.594；LoRA 0.802 |

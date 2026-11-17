@@ -52,14 +52,14 @@
 中文：提示词每条都一样，学它没意义，还会冲淡答案部分的信号。
 
 **9. How do you know you didn't overfit to the test set?**
-> All tuning used the 142-review validation set. Each model was scored on the 262-review test set exactly once, after the configuration was fixed. And the fresh human-labelled set was drawn from reviews never used anywhere.
+> All tuning used the 142-review validation set. Each model was scored on the 262-review test set exactly once, after the configuration was fixed. That includes two retrains of the final configuration with other seeds, which we ran only to measure training randomness, not to choose anything. And the fresh human-labelled set was drawn from reviews never used anywhere.
 
-中文：调参只看验证集；测试集只跑一次；人工集是全新的。
+中文：调参只看验证集；每个模型只在测试集上跑一次（包括最终配置换种子重训的两个，只用来量随机性，不参与挑选）；人工集是全新的。
 
 **10. What does the 95% confidence interval mean here?**
-> We resampled the test reviews 2,000 times with replacement and recomputed F1 each time. For the tuning gain, 95% of the resamples fall between +0.038 and +0.110, so it is unlikely to be luck in *which reviews were tested*. One caveat: each model was trained only once, so the interval doesn't include training randomness — retraining with another seed moved validation F1 by about 0.01.
+> We resampled the test reviews 2,000 times with replacement and recomputed F1 each time. For the tuning gain, 95% of the resamples fall between +0.038 and +0.110, so it is unlikely to be luck in *which reviews were tested*. That interval doesn't include training randomness, so we also retrained the final configuration with two more seeds: test F1 0.790 and 0.805, against 0.807 for the run we report. The mean is 0.801, and every seed beats the default by at least 0.056. Our reported run is the luckiest of the three, so the honest headline is "about +0.07". The default itself was trained only once on test.
 
-中文：自助法重抽样 2000 次；区间不含 0。但要主动说明：每个模型只训练了一次，区间只反映"测试样本的随机性"，不包括"训练的随机性"（换种子验证集 F1 变化约 0.01）。
+中文：自助法重抽样 2000 次；区间不含 0。但区间只反映"测试样本的随机性"，不包括"训练的随机性"——所以最终配置又换了 2 个种子重训：测试 F1 0.790、0.805（报告的那次是 0.807），平均 0.801，每个种子都比默认高至少 0.056。要主动承认报告的那次刚好是三个里最高的。默认配置在测试集上只有一个种子。
 
 ## 训练与调参
 
@@ -74,14 +74,14 @@
 中文：固定 scale 下 rank 越大更新越大；把 scale 按 α/r 调回去就恢复了——用实验验证了这个解释。
 
 **13. How do you know the differences between configurations aren't just random?**
-> We ran the default configuration twice with different random seeds: validation F1 was 0.758 and 0.747. That ~0.01 spread is our noise level, shown as a grey band in the chart. Learning rate 5e-5 is 0.035 above the default — about three times that spread — and the test-set gain has a confidence interval excluding zero. Also, the validation set has only 142 reviews, so we only trust large differences; small ones like rank 8 vs 16 we treat as ties.
+> We ran the default configuration twice with different random seeds (validation F1 0.758 and 0.747, the grey band in the chart), and after the sweep the final configuration three times (0.788 to 0.807). So chance alone can move a score by up to about 0.02. Learning rate 5e-5 survives this: all three of its seeds beat both seeds of the default, and the test-set gain has a confidence interval excluding zero. Also, the validation set has only 142 reviews, so we only trust large differences; small ones like rank 8 vs 16 we treat as ties.
 
-中文：换种子跑两次，波动约 0.01；验证集只有 142 条，所以只相信大差异，小差异一律当成打平。
+中文：默认配置两个种子差 0.011，最终配置三个种子范围 0.788–0.807，所以噪声大约 0.02 以内；lr 5e-5 的三个种子都高于默认的两个种子。验证集只有 142 条，所以只相信大差异，小差异一律当成打平。
 
 **14. You only changed one factor at a time. What about interactions?**
-> True — that's a stated limitation. A full grid of 4 ranks × 3 learning rates × 3 layer settings would be 36 runs, about 56 hours on our laptop. One-factor-at-a-time needed only 7 new runs, plus 2 diagnostic runs (a second seed and the rank-32 scale check). The natural next experiment is combining the two best settings: learning rate 5e-5 with rank 4.
+> True — that's a stated limitation. A full grid of 4 ranks × 3 learning rates × 3 layer settings would be 36 runs, about 56 hours on our laptop. One-factor-at-a-time needed only 7 new runs, plus 2 diagnostic runs (a second seed and the rank-32 scale check) and, afterwards, 2 extra seeds of the final configuration. The natural next experiment is combining the two best settings: learning rate 5e-5 with rank 4.
 
-中文：全组合要 56 小时，单因素只要 7 组（另加 2 组诊断实验）；下一步可以试 lr 5e-5 + r=4 组合。
+中文：全组合要 56 小时，单因素只要 7 组（另加 2 组诊断实验，事后再加最终配置的 2 个种子）；下一步可以试 lr 5e-5 + r=4 组合。
 
 **15. How did you pick the checkpoint?**
 > We saved a checkpoint every 40 steps and picked the one with the lowest validation loss. The last checkpoint was never the best in any converged run — at the start of the second epoch, training loss halves while validation loss stays flat, which is the model starting to memorise.
@@ -130,16 +130,16 @@
 | 训练 / 验证 / 测试 | 1,824 / 142 / 262 |
 | 可训练参数 | 17.4M / 1,720M（1.01%），适配器 70 MB |
 | 训练时间 | 480 步约 94 分钟（M5，32 GB） |
-| 测试集方面 F1 | 原始 0.513 → 默认 LoRA 0.734 → 调参后 0.807 |
-| 调参提升 | +0.073，95% 区间 [+0.038, +0.110] |
+| 测试集方面 F1 | 原始 0.513 → 默认 LoRA 0.734 → 调参后 0.807（3 个种子平均 0.801，范围 0.790–0.807） |
+| 调参提升 | 报告的那次 +0.073，95% 区间 [+0.038, +0.110]；3 个种子每个都至少 +0.056 |
 | 人工评估方面 F1 | 原始 0.458 / 学生 0.701 / 老师 0.689 |
 | 组员一致性 | 0.644（20 条共同标注，仲裁前；100 条里另 80 条只有一人标） |
 | 公平对比（同 20 条，对各人原始标注的平均） | 组员 B 0.644 / 学生 0.661 / 老师 0.693 / 原始 0.419（区间重叠） |
 | 少样本对照（验证集） | 原始 0.538 → 给 4 个示例 0.594；LoRA 0.802 |
 | 成本（老师 vs 学生，批大小 8） | 权重 17.2 vs 3.5 GB（4.9×），峰值 19.8 vs 5.7 GB（3.5×），1.37 vs 0.75 秒/条（1.8×） |
 | 参数（老师 vs 学生） | 总 30.5B vs 1.74B（18×），激活 3.3B vs 1.74B（1.9×） |
-| 训练次数 | 每个配置只训练一次（单种子） |
-| 种子波动 | 0.747–0.758 |
+| 训练次数 | 最终配置 3 个种子（42/43/44，验证+测试）；默认配置 2 个（第二个只看验证集）；其余单种子 |
+| 种子波动（验证集） | 默认 0.747–0.758；最终配置 0.788–0.807 → 噪声约 0.02 以内 |
 | lr 2e-4 | 第 40 步发散，验证损失 2.6 → 7.1 |
 | r=32 | 0.697 → scale 改 10 后 0.766 |
 | 只训练顶部 8 层 | 0.749，训练 46 分钟 |

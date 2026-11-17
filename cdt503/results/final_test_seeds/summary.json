@@ -1,0 +1,88 @@
+{
+  "per_seed": {
+    "42": {
+      "best_step": 240,
+      "best_val_loss": 0.115,
+      "valid": {
+        "json_valid": 1.0,
+        "sentiment_acc": 0.9788732394366197,
+        "aspect_f1": 0.7933194154488517
+      },
+      "test": {
+        "json_valid": 1.0,
+        "sentiment_acc": 0.9694656488549618,
+        "aspect_f1": 0.8068571428571428
+      }
+    },
+    "43": {
+      "best_step": 160,
+      "best_val_loss": 0.112,
+      "valid": {
+        "json_valid": 1.0,
+        "sentiment_acc": 0.971830985915493,
+        "aspect_f1": 0.7876288659793815
+      },
+      "test": {
+        "json_valid": 0.9961832061068703,
+        "sentiment_acc": 0.9618320610687023,
+        "aspect_f1": 0.7898383371824479
+      }
+    },
+    "44": {
+      "best_step": 280,
+      "best_val_loss": 0.115,
+      "valid": {
+        "json_valid": 1.0,
+        "sentiment_acc": 0.971830985915493,
+        "aspect_f1": 0.8074534161490684
+      },
+      "test": {
+        "json_valid": 0.9961832061068703,
+        "sentiment_acc": 0.9770992366412213,
+        "aspect_f1": 0.8053993250843645
+      }
+    }
+  },
+  "aggregate": {
+    "valid": {
+      "json_valid": {
+        "mean": 1.0,
+        "min": 1.0,
+        "max": 1.0,
+        "n_seeds": 3
+      },
+      "sentiment_acc": {
+        "mean": 0.9741784037558686,
+        "min": 0.971830985915493,
+        "max": 0.9788732394366197,
+        "n_seeds": 3
+      },
+      "aspect_f1": {
+        "mean": 0.7961338991924339,
+        "min": 0.7876288659793815,
+        "max": 0.8074534161490684,
+        "n_seeds": 3
+      }
+    },
+    "test": {
+      "json_valid": {
+        "mean": 0.9974554707379135,
+        "min": 0.9961832061068703,
+        "max": 1.0,
+        "n_seeds": 3
+      },
+      "sentiment_acc": {
+        "mean": 0.9694656488549618,
+        "min": 0.9618320610687023,
+        "max": 0.9770992366412213,
+        "n_seeds": 3
+      },
+      "aspect_f1": {
+        "mean": 0.8006982683746516,
+        "min": 0.7898383371824479,
+        "max": 0.8068571428571428,
+        "n_seeds": 3
+      }
+    }
+  }
+}

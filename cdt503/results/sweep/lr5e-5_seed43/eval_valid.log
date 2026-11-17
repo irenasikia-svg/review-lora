@@ -1,0 +1,11 @@
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 2678.55it/s]
+  16/142  1.6 条/秒
+  96/142  1.6 条/秒
+split: valid
+adapter: /Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5_seed43/best
+n: 142
+sec_per_item: 0.615
+JSON合格率: 1.000
+整体情感准确率: 0.972
+方面F1: 0.788
+方面F1_只看方面名: 0.812

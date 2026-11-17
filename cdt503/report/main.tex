@@ -33,7 +33,7 @@ teacher (Qwen3-30B-A3B) labels 2{,}425 real reviews under a written annotation g
 contradict the review's human star rating are filtered out, and a 1.7B student (Qwen3-1.7B) is fine-tuned with LoRA on
 an Apple-silicon laptop using MLX. A one-factor-at-a-time sweep over rank, learning rate and adapted layers (10 runs,
 selected on validation data only) raises test aspect-F1 from 0.734 to 0.807 ($+0.073$, 95\% bootstrap CI
-$[+0.038, +0.110]$), versus 0.513 for the untuned base model; showing the base model the teacher's four worked
+$[+0.038, +0.110]$; 0.790--0.807 across three training seeds), versus 0.513 for the untuned base model; showing the base model the teacher's four worked
 examples instead helps far less (validation F1 0.538 $\rightarrow$ 0.594, vs.\ 0.802 for LoRA). On 100 never-used reviews
 labelled by two group members, the student is statistically indistinguishable from the teacher (0.701 vs.\ 0.689
 aspect-F1) with 18$\times$ fewer total parameters (under 2$\times$ fewer active ones), about 5$\times$ less weight memory
@@ -180,11 +180,14 @@ Selection & lowest validation loss (checkpoint every 40 steps) \\
 
 \subsection{Main result}
 Table~\ref{tab:main} compares the untuned base model, LoRA with the default configuration, and LoRA with the tuned
-learning rate. Fine-tuning fixes the format problem completely (90.8\%$\rightarrow$100\% valid JSON) and raises
-aspect-F1 by 0.220 (CI $[+0.164, +0.277]$); tuning adds a further 0.073 (CI $[+0.038, +0.110]$). Inference cost is
-unchanged at $\approx$0.6\,s per review (batched). These intervals capture only \emph{which test reviews were sampled}:
-each model was trained once (seed 42), and retraining the default configuration with another seed moved validation F1
-by 0.011 (Sec.~\ref{sec:sweep}), so the uncertainty of the tuning gain is larger than its interval suggests.
+learning rate. Fine-tuning fixes the format problem (90.8\%$\rightarrow$99.6--100\% valid JSON) and raises
+aspect-F1 by 0.220 (CI $[+0.164, +0.277]$); for the selected run (seed 42), tuning adds a further 0.073
+(CI $[+0.038, +0.110]$). Inference cost is unchanged at $\approx$0.6\,s per review (batched). These intervals capture
+only \emph{which test reviews were sampled}, not training randomness, so we retrained the tuned configuration with two
+more seeds (43, 44), again choosing each checkpoint by validation loss. Their test aspect-F1 is 0.790 and 0.805: the
+selected run sits at the top of the range, the three-seed mean is 0.801 (Table~\ref{tab:main}), and every seed beats
+the default by at least 0.056. The default itself was trained once on these data (a second seed, scored on validation
+only, moved F1 by 0.011), so the gain still carries some seed uncertainty on that side.
 
 \textbf{Few-shot prompting and cost.} Table~\ref{tab:cost} compares the alternatives on the validation split under
 identical conditions. Showing the base model the teacher's four worked examples raises aspect-F1 only from 0.538 to 0.594
@@ -195,16 +198,18 @@ student's 1.74B. Its weights take 17.2\,GB versus 3.5\,GB (4.9$\times$; peak mem
 
 \begin{table}[t]
 \centering
-\caption{Test-set results (262 reviews, reference = filtered teacher labels). Each row evaluated once.}
+\caption{Test-set results (262 reviews, reference = filtered teacher labels). Each trained model evaluated once.
+$^\dagger$Mean of three training seeds, with min--max in parentheses; the selected seed-42 run scores 0.807
+(CI 0.773--0.838).}
 \label{tab:main}
-\setlength{\tabcolsep}{2.5pt}
+\setlength{\tabcolsep}{1.8pt}
 \begin{tabular}{lccc}
 \toprule
 Model & JSON valid & Sent.\ acc. & Aspect-F1 (95\% CI) \\
 \midrule
 Base Qwen3-1.7B & 0.908 & 0.882 & 0.513 (0.463--0.561) \\
-LoRA, default ($\text{lr}=10^{-4}$) & 1.000 & 0.947 & 0.734 (0.698--0.769) \\
-LoRA, tuned ($\text{lr}=5{\times}10^{-5}$) & \textbf{1.000} & \textbf{0.969} & \textbf{0.807} (0.773--0.838) \\
+LoRA, default ($\text{lr}=10^{-4}$) & \textbf{1.000} & 0.947 & 0.734 (0.698--0.769) \\
+LoRA, tuned ($\text{lr}=5{\times}10^{-5}$)$^\dagger$ & 0.997 & \textbf{0.969} & \textbf{0.801} (0.790--0.807) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -235,13 +240,15 @@ We varied one factor at a time around the default: rank $r\in\{4,8,16,32\}$, lea
 $\in\{5{\times}10^{-5},10^{-4},2{\times}10^{-4}\}$ and the number of adapted (top) layers $\in\{8,16,28\}$, plus two
 diagnostic runs: the default with a different random seed, and $r=32$ with $s=10$ (Table~\ref{tab:sweep},
 Fig.~\ref{fig:sweep}). The seed run tells us how much a score moves by chance alone: validation aspect-F1 0.747 vs.\
-0.758, so we treat differences below $\approx$0.01 as noise. Because the validation split has only 142 reviews,
+0.758. Three seeds of the selected configuration, run after the sweep, span 0.788--0.807, so we treat differences
+below $\approx$0.02 as noise. Because the validation split has only 142 reviews,
 even somewhat larger differences may partly reflect which reviews it happens to contain, so we draw conclusions only
 from large effects.
 
 \begin{table}[t]
 \centering
-\caption{Sweep results on the validation split (142 reviews). Bold: selected configuration.}
+\caption{Sweep results on the validation split (142 reviews). Bold: selected configuration.
+$^\dagger$Run after selection, to measure seed variation; not used for choosing.}
 \label{tab:sweep}
 \setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{lrrrrr}
@@ -255,6 +262,8 @@ $r=8$ & 8.7M & 200 & 0.131 & 0.762 & 96 \\
 $r=32$ & 34.9M & 400 & 0.179 & 0.697 & 93 \\
 $r=32$, $s=10$ & 34.9M & 400 & 0.135 & 0.766 & 93 \\
 \textbf{lr $5{\times}10^{-5}$} & 17.4M & 240 & \textbf{0.115} & \textbf{0.793} & 94 \\
+\quad same, seed 43$^\dagger$ & 17.4M & 160 & 0.112 & 0.788 & 96 \\
+\quad same, seed 44$^\dagger$ & 17.4M & 280 & 0.115 & 0.807 & 96 \\
 lr $2{\times}10^{-4}$ & 17.4M & -- & diverged & 0.000 & 93 \\
 Top 8 layers & 5.0M & 320 & 0.144 & 0.749 & 46 \\
 Top 16 layers & 10.0M & 200 & 0.126 & 0.760 & 65 \\
@@ -273,8 +282,9 @@ configuration, i.e.\ what chance alone can explain.}
 \end{figure*}
 
 \textbf{Learning rate matters most.} Halving it to $5\times10^{-5}$ gives the lowest validation loss (0.115) and the
-best F1 (0.793, $+0.035$, three times the seed spread); doubling it to $2\times10^{-4}$---with a constant learning
-rate and no warm-up---diverges within 40 steps
+best F1 (0.793, $+0.035$); all three of its seeds (0.788--0.807) beat both seeds of the default (0.747--0.758).
+Doubling the learning rate to $2\times10^{-4}$---with a constant
+schedule and no warm-up---diverges within 40 steps
 (validation loss jumps from 2.6 to 7.1 and the model emits repeated punctuation), never recovering.
 
 \textbf{Larger rank is not better---because of the scale.} $r=32$ is clearly worse (0.697). Since MLX-LM multiplies the
@@ -287,7 +297,7 @@ Small ranks are sufficient for this narrow task: $r=4$ (4.4M parameters) scores 
 training time from 94 to 46 or 65 minutes, since back-propagation stops at the lowest adapted layer.
 
 \textbf{Checkpoint selection matters.} Fig.~\ref{fig:loss} shows that at the start of the second epoch the training loss
-halves while validation loss stays flat---the model begins to memorise. In none of the nine converged runs was the final
+halves while validation loss stays flat---the model begins to memorise. In none of the eleven converged runs was the final
 checkpoint the best one; for $r=4$, validation loss rises from 0.118 at step 440 to 0.165 at step 480.
 
 \begin{figure}[t]
@@ -409,15 +419,15 @@ out-of-memory), so heavy jobs are now scheduled one at a time and every long job
 much shorter prompt is a promising optimisation. MLX also binds computation to the thread that loaded the model, which
 crashed our first multi-threaded web server and motivated the dedicated inference thread.
 
-\textbf{Limitations.} The test reference is teacher-generated. Each configuration, including the final one, was
-trained once, so reported intervals reflect test-sample variation only. Of the 100 human-labelled reviews, 80 have a
+\textbf{Limitations.} The test reference is teacher-generated. Apart from the final configuration (three seeds) and
+the default (two), each configuration was trained once, and even three seeds are few. Of the 100 human-labelled reviews, 80 have a
 single annotator and only 20 support the human--model comparison. The sweep varies one factor at a time on a 142-review
 validation set, so interactions (e.g.\ lr $5\times10^{-5}$ with $r=4$) are untested.
 
 \textbf{Conclusion.} A 1.7B model fine-tuned with LoRA on 1.8k teacher-labelled reviews, using only a laptop, produces
 valid structured output 99--100\% of the time and is statistically indistinguishable from its teacher against human
 judgement, with about a fifth of the teacher's weight memory.
-Systematic tuning added 7 F1 points, and the clearest lessons were about data: a precise label schema, a quality filter,
+Systematic tuning added about 7 F1 points (at least 5.6 for each of three seeds), and the clearest lessons were about data: a precise label schema, a quality filter,
 and honest evaluation on data no model has seen.
 
 \textbf{Use of AI tools.} An AI coding assistant (Claude Code) was used to write and debug code and to draft

@@ -1,0 +1,10 @@
+{
+  "split": "valid",
+  "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5_seed43/best",
+  "n": 142,
+  "sec_per_item": 0.6150284652978601,
+  "JSON合格率": 1.0,
+  "整体情感准确率": 0.971830985915493,
+  "方面F1": 0.7876288659793815,
+  "方面F1_只看方面名": 0.8123711340206186
+}

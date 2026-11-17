@@ -56,11 +56,11 @@
   1. **Learning rate matters most:** 5e-5 best (0.793); 2e-4 (constant, no warm-up) diverged within 40 steps
   2. **Bigger rank is *not* better** — r=32 fell to 0.697, but fixing the scale (α constant) brought it back to 0.766 → it was the update size, not the rank
   3. **Top-8 layers only:** same quality, half the training time
-- **Say:** "The grey band is what randomness alone does — we ran the default twice with different seeds. Anything inside the band we treat as noise, and since the validation set is small, we only trust big differences."
+- **Say:** "The grey band is what randomness alone does — we ran the default twice with different seeds, and later the winning configuration three times. Chance alone moves a score by up to about 0.02, so we only trust big differences — and the learning-rate result is one: all three of its seeds beat the default."
 - [这一页对应"系统调参并附对比图"，是 Level 2 的关键，讲慢一点]
 
 ### Slide 7 — Results (B, 1:00)
-- Left: **test set (262)** — aspect-F1 0.513 → 0.734 → **0.807**; JSON validity 90.8% → 100%; tuning adds +0.073 (95% CI +0.038 to +0.110)
+- Left: **test set (262)** — aspect-F1 0.513 → 0.734 → **0.801** (mean of 3 training seeds, range 0.790–0.807); JSON validity 90.8% → 99.6–100%; tuning adds +0.073 for the selected run (95% CI +0.038 to +0.110), and at least +0.056 for every seed
 - Right: **100 never-used reviews, labelled by us two** — student 0.701 vs teacher 0.689 (not significantly different), base 0.458
 - Small line under the table: few-shot prompting the base model only reaches 0.594 (validation); teacher needs ~5× the weight memory and is 1.8× slower
 - **Say:** "Judged by humans, our student and the 30B teacher are statistically indistinguishable — but the student needs about a fifth of the memory. And simply giving the small model a few examples is not enough: that only gets to 0.59."

@@ -1,0 +1,32 @@
+{
+  "name": "lr5e-5_seed44",
+  "overrides": {
+    "learning_rate": 5e-05,
+    "seed": 44
+  },
+  "rank": 16,
+  "scale": 20.0,
+  "learning_rate": 5e-05,
+  "num_layers": -1,
+  "batch_size": 8,
+  "seed": 44,
+  "iters": 480,
+  "trainable_pct": 1.013,
+  "trainable_M": 17.433,
+  "best_step": 280,
+  "best_val_loss": 0.115,
+  "final_val_loss": 0.136,
+  "train_minutes": 96.25967890421549,
+  "resumed_at": [],
+  "imported_from": null,
+  "valid": {
+    "split": "valid",
+    "adapter": "/Users/kuumo/claude/review-lora/cdt503/runs/sweep/lr5e-5_seed44/best",
+    "n": 142,
+    "sec_per_item": 0.605429965005794,
+    "JSON合格率": 1.0,
+    "整体情感准确率": 0.971830985915493,
+    "方面F1": 0.8074534161490684,
+    "方面F1_只看方面名": 0.8447204968944099
+  }
+}
