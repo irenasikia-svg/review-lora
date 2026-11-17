@@ -245,9 +245,9 @@ def build_ui(engine, adapter_label):
         lora_html, lora_p = card(out["lora"])
         return base_html, highlight(text, base_p), lora_html, highlight(text, lora_p)
 
-    with gr.Blocks(title="Review Aspect Extraction — LoRA demo") as demo:
+    with gr.Blocks(title="Beyond Star Ratings — demo") as demo:
         gr.Markdown(
-            "## Aspect-based sentiment extraction for Chinese product reviews\n"
+            "## Beyond Star Ratings: Aspect Extraction from Chinese Reviews\n"
             "Type a Chinese e-commerce review. The **same Qwen3-1.7B model** answers twice: once as-is, "
             f"and once with a 70 MB **LoRA adapter** fine-tuned on 1.8k reviews labelled by Qwen3-30B. "
             f"<small>Adapter: `{adapter_label}` · runs locally on an Apple M5 with MLX</small>")

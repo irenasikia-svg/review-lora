@@ -22,7 +22,8 @@
 | 9 | A（前半）+ B（结论） | 0:45 | 7:40 |
 
 ### Slide 1 — Title & the problem (A, 0:40)
-- **Title:** Distilling a 30B Teacher into a 1.7B Student — LoRA fine-tuning for aspect extraction from Chinese reviews, on a laptop
+- **Title:** Beyond Star Ratings: Aspect Extraction from Chinese Reviews
+- 标题下面一行小字可以写方法："a 1.7B model taught by a 30B teacher, fine-tuned on a laptop"
 - **Visual:** one real review with three coloured highlights: *close to the metro* (+ Location), *poor sound insulation* (− Room), *check-in took half an hour* (− Service)
 - **Say:** "Star ratings tell a shop *whether* customers are happy, not *why*. One sentence can hide three different signals. We built a small model that turns any Chinese review into structured JSON a program can count."
 
