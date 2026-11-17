@@ -19,6 +19,7 @@ import json
 import os
 import queue
 import re
+import tempfile
 import sys
 import threading
 import time
@@ -30,10 +31,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.join(ROOT, "cdt503/scripts"))
 from aspects_en import ASPECT_EN, en  # noqa: E402
+import product_report  # noqa: E402
 from common import ASPECTS, SENTIMENTS, parse_output  # noqa: E402
 
 STUDENT = "mlx-community/Qwen3-1.7B-bf16"
 MAX_CHARS = 300
+# 商品报告页的内置样例（cdt503/scripts/make_report_samples.py 生成，全是没用过的评论）
+SAMPLES = {name: os.path.join(ROOT, f"cdt503/demo/samples/{key}.csv")
+           for name, key in [("Hotel", "hotel"), ("Tablet", "tablet"), ("Fruit", "fruit")]}
 TIMEOUT_SEC = 90
 
 # 按演示顺序排。实测（lr=5e-5）时原始模型在 1、2、3、4、6 上输出不合格，现场对比最直观。
@@ -86,7 +91,7 @@ class Engine:
         from mlx_lm import generate
         from mlx_lm.tuner.lora import LoRALinear
 
-        from gen import encode, load_model
+        from gen import encode, extract, load_model
 
         self.model, self.tok = load_model(STUDENT, adapter_path=self.adapter)
         self.layers = [m for _, m in self.model.named_modules() if isinstance(m, LoRALinear)]
@@ -94,6 +99,8 @@ class Engine:
         if not self.layers:
             raise RuntimeError(f"No LoRA layers found in {self.adapter}")
         self._generate = lambda text: generate(self.model, self.tok, encode(self.tok, text), max_tokens=256)
+        # 商品报告用：一批评论一起生成（批大小 8，和 B4 成本测量一致）
+        self._extract = lambda texts: extract(self.model, self.tok, texts, batch_size=8, log_every=10**9)
         print(f"已加载 {STUDENT} + {self.adapter}（{len(self.layers)} 个 LoRA 层）", flush=True)
 
     def _run(self, text, lora):
@@ -115,20 +122,33 @@ class Engine:
             self.error = e
         self.ready.set()
         while True:
-            text, fut = self.jobs.get()
+            kind, payload, fut = self.jobs.get()
             try:
-                out = {}
-                for key, lora in (("base", False), ("lora", True)):
-                    start = time.time()
-                    raw = self._run(text, lora)
-                    out[key] = {"raw": raw, "ms": int((time.time() - start) * 1000)}
-                fut.set_result(out)
+                if kind == "compare":  # 单条评论：原始模型和 LoRA 各生成一次
+                    out = {}
+                    for key, lora in (("base", False), ("lora", True)):
+                        start = time.time()
+                        raw = self._run(payload, lora)
+                        out[key] = {"raw": raw, "ms": int((time.time() - start) * 1000)}
+                    fut.set_result(out)
+                else:  # "batch"：商品报告，一组评论只用 LoRA 模型
+                    if self.mock:
+                        fut.set_result([mock_output(t, True) for t in payload])
+                    else:
+                        for m, s in zip(self.layers, self.scales):
+                            m.scale = s
+                        fut.set_result(self._extract(payload))
             except Exception as e:  # noqa: BLE001
                 fut.set_exception(e)
 
     def submit(self, text):
         fut = Future()
-        self.jobs.put((text, fut))
+        self.jobs.put(("compare", text, fut))
+        return fut
+
+    def submit_batch(self, texts):
+        fut = Future()
+        self.jobs.put(("batch", texts, fut))
         return fut
 
 
@@ -217,6 +237,20 @@ CSS = """
 .rl-muted { opacity: .65; }
 .rl-card pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; }
 .rl-lora { border: 2px solid #3b5bdb !important; border-radius: 12px; padding: 10px 12px !important; }
+.pr-card { font-size: 15px; }
+.pr-card .pos { color: #1f8a4c; } .pr-card .neg { color: #c2412d; }
+.pr-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.pr-kpis div { border: 1px solid rgba(128,128,128,.25); border-radius: 10px; padding: 8px 12px; }
+.pr-kpis b { display: block; font-size: 26px; line-height: 1.2; }
+.pr-kpis span { font-size: 12px; opacity: .7; }
+.pr-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0 14px; }
+.pr-bar .pos { background: #3cb371; } .pr-bar .neg { background: #e8735a; }
+.pr-chip { display: inline-block; border-radius: 999px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: 14px; }
+.pr-chip.pos { background: #e3f4ea; } .pr-chip.neg { background: #fbe7e3; }
+.pr-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.pr-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; }
+.pr-table td { padding: 6px 4px; border-top: 1px solid rgba(128,128,128,.25); vertical-align: top; }
+.pr-muted { opacity: .65; font-size: 13px; }
 """
 COLOR_MAP = {f"{v} +": "#3cb371" for v in ASPECT_EN.values()} | {f"{v} −": "#e8735a" for v in ASPECT_EN.values()}
 
@@ -245,30 +279,79 @@ def build_ui(engine, adapter_label):
         lora_html, lora_p = card(out["lora"])
         return base_html, highlight(text, base_p), lora_html, highlight(text, lora_p)
 
+    def report(text, upload, sample, progress=gr.Progress()):
+        rows = product_report.read_reviews(text, upload)
+        if sample and sample in SAMPLES:
+            rows += product_report.read_reviews("", SAMPLES[sample])
+        if not rows:
+            gr.Warning("Paste some reviews, upload a file, or pick a built-in sample.")
+            return gr.skip(), gr.skip(), gr.skip()
+        if len(rows) > product_report.MAX_REVIEWS:
+            gr.Info(f"Using the first {product_report.MAX_REVIEWS} of {len(rows)} reviews.")
+            rows = rows[:product_report.MAX_REVIEWS]
+        if not engine.ready.is_set() or engine.error:
+            gr.Warning("The model is not ready yet — please try again in a few seconds.")
+            return gr.skip(), gr.skip(), gr.skip()
+        texts = [t[:MAX_CHARS] for t, _ in rows]
+        labels = [lab for _, lab in rows]
+        raws = []
+        try:
+            # 每 16 条交给推理线程一次：进度条能动，别人的单条请求也能在两组之间插进来
+            for i in range(0, len(texts), 16):
+                progress(i / len(texts), desc=f"Reading reviews {i + 1}–{min(i + 16, len(texts))} of {len(texts)}")
+                raws += engine.submit_batch(texts[i:i + 16]).result(timeout=TIMEOUT_SEC * 2)
+        except Exception as e:  # noqa: BLE001
+            msg = f'<div class="rl-problems">Something went wrong ({esc(type(e).__name__)}). Please try again.</div>'
+            return msg, None, None
+        rep = product_report.build_report(texts, raws, labels)
+        csv_path = os.path.join(tempfile.mkdtemp(prefix="review_report_"), "review_report.csv")
+        product_report.to_csv(csv_path, texts, rep, labels)
+        return product_report.render_html(rep), product_report.plot(rep), csv_path
+
     with gr.Blocks(title="Beyond Star Ratings — demo") as demo:
         gr.Markdown(
             "## Beyond Star Ratings: Aspect Extraction from Chinese Reviews\n"
-            "Type a Chinese e-commerce review. The **same Qwen3-1.7B model** answers twice: once as-is, "
-            f"and once with a 70 MB **LoRA adapter** fine-tuned on 1.8k reviews labelled by Qwen3-30B. "
-            f"<small>Adapter: `{adapter_label}` · runs locally on an Apple M5 with MLX</small>")
-        with gr.Row():
-            box = gr.Textbox(label="Review (Chinese)", lines=3, max_lines=6, scale=5,
-                             placeholder="例如：屏幕很清晰，但电池两天就没电了，客服也不理人")
-            with gr.Column(scale=1, min_width=140):
-                btn = gr.Button("Analyze", variant="primary")
-                gr.ClearButton(box, value="Clear")
-        gr.Examples(EXAMPLES, inputs=box, label="Try an example (click to fill in, then Analyze)")
-        with gr.Row(equal_height=False):
-            with gr.Column():
-                gr.Markdown("### Base model (no fine-tuning)")
-                base_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
-                                             combine_adjacent=False, show_legend=False)
-                base_out = gr.HTML()
-            with gr.Column(elem_classes="rl-lora"):
-                gr.Markdown("### LoRA fine-tuned")
-                lora_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
-                                             combine_adjacent=False, show_legend=False)
-                lora_out = gr.HTML()
+            f"<small>Qwen3-1.7B + 70 MB LoRA adapter (`{adapter_label}`), fine-tuned on 1.8k reviews labelled by "
+            "Qwen3-30B · runs locally on an Apple M5 with MLX</small>")
+        with gr.Tab("Compare one review"):
+            gr.Markdown("Type a Chinese e-commerce review. The **same Qwen3-1.7B model** answers twice: once as-is, "
+                        "and once with our **LoRA adapter**.")
+            with gr.Row():
+                box = gr.Textbox(label="Review (Chinese)", lines=3, max_lines=6, scale=5,
+                                 placeholder="例如：屏幕很清晰，但电池两天就没电了，客服也不理人")
+                with gr.Column(scale=1, min_width=140):
+                    btn = gr.Button("Analyze", variant="primary")
+                    gr.ClearButton(box, value="Clear")
+            gr.Examples(EXAMPLES, inputs=box, label="Try an example (click to fill in, then Analyze)")
+            with gr.Row(equal_height=False):
+                with gr.Column():
+                    gr.Markdown("### Base model (no fine-tuning)")
+                    base_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
+                                                 combine_adjacent=False, show_legend=False)
+                    base_out = gr.HTML()
+                with gr.Column(elem_classes="rl-lora"):
+                    gr.Markdown("### LoRA fine-tuned")
+                    lora_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
+                                                 combine_adjacent=False, show_legend=False)
+                    lora_out = gr.HTML()
+        with gr.Tab("Product report"):
+            gr.Markdown(
+                "Give the model **many reviews of one product** — paste them (one per line), upload a CSV/TXT, "
+                "or load a built-in sample. The fine-tuned model reads every review and summarises what customers "
+                f"praise and complain about. Up to {product_report.MAX_REVIEWS} reviews, about 0.75 s each.")
+            with gr.Row():
+                rep_text = gr.Textbox(label="Reviews (one per line)", lines=8, max_lines=14, scale=3)
+                with gr.Column(scale=2, min_width=220):
+                    rep_file = gr.File(label="…or upload CSV / TXT", file_types=[".csv", ".txt"], type="filepath")
+                    rep_sample = gr.Dropdown(["(none)"] + list(SAMPLES), value="(none)",
+                                             label="…or a built-in sample (150 unseen reviews)")
+                    rep_btn = gr.Button("Generate report", variant="primary")
+            rep_html = gr.HTML()
+            with gr.Row():
+                rep_plot = gr.Plot(label="Aspects by sentiment")
+                rep_csv = gr.File(label="Download per-review results (CSV)")
+            gr.Markdown("<small>Built-in samples come from the dataset, which mixes positive and negative reviews "
+                        "roughly 50/50 by design, so their positive share is not that of a real product.</small>")
         with gr.Accordion("The 16 aspects the model may choose from", open=False):
             gr.Markdown("| Aspect | 中文 | Covers |\n|---|---|---|\n" + "\n".join(
                 f"| {ASPECT_EN[k]} | {k} | {v} |" for k, v in ASPECTS.items()))
@@ -276,6 +359,7 @@ def build_ui(engine, adapter_label):
                     "short queue.</small>")
         btn.click(analyze, box, [base_out, base_hl, lora_out, lora_hl])
         box.submit(analyze, box, [base_out, base_hl, lora_out, lora_hl])
+        rep_btn.click(report, [rep_text, rep_file, rep_sample], [rep_html, rep_plot, rep_csv])
     return demo
 
 
