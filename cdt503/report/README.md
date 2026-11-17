@@ -20,7 +20,7 @@ sh ~/claude/review-lora/cdt503/report/make_texpage_zip.sh
 
 ## 交之前要补的
 
-- [ ] **学号**：`main.tex` 作者行里 Li Mingtai 后面红色的 `[ID]` 换成学号
+- [x] **学号**：两位组员的学号已填入作者行
 - [ ] **演示截图**：启动演示（`uv run python cdt503/app_gradio.py`），点第 1 个示例"果子特别棒……"再点 Analyze，
   截取左右两栏的结果（原始模型那栏会显示 "Aspect '味道' is not in the allowed list"），
   存成 `cdt503/figures/demo_screenshot.png`。图注写的就是这个例子；换别的例子要同步改图注

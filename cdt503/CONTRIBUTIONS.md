@@ -3,7 +3,7 @@
 | | Member A | Member B |
 |---|---|---|
 | Name | Han Daiyuan | Li Mingtai |
-| Student ID | 3231363 | _(to fill)_ |
+| Student ID | 3231363 | 3231959 |
 
 "A" and "B" are the same identifiers used for the human annotation (`cdt503/data/aspect_gold_A.jsonl`, `aspect_gold_B.jsonl`).
 
