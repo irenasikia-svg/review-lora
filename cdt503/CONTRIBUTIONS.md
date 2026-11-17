@@ -18,8 +18,6 @@ Each member owns one end-to-end part independently; shared tasks are listed sepa
 | Human evaluation | Han Daiyuan | Sampling 100 never-used reviews; the labelling and adjudication tools; evaluation and error analysis |
 | Gradio prototype | Li Mingtai | Single-model LoRA on/off design; inference thread and queue; stress test; DEMO.md fall-back plan |
 | Report | Han Daiyuan: §I–II · Li Mingtai: §III–IV | Each writes and checks their sections; both proof-read the whole report |
-| Presentation | Han Daiyuan: slides 1–4, 9 (first half) · Li Mingtai: slides 5–7, 9 (conclusion) | Live demo: Han Daiyuan operates, Li Mingtai narrates |
-| Q&A | Han Daiyuan: data & method (Q1–10) · Li Mingtai: training, results & deployment (Q11–20) | Both prepare all 20 |
 
 ## Shared tasks
 
@@ -27,7 +25,6 @@ Each member owns one end-to-end part independently; shared tasks are listed sepa
 |---|---|
 | Human annotation | 60 reviews each (20 shared for agreement) |
 | Adjudication | Jointly reviewed the 20 disagreeing / contradictory labels |
-| Rehearsal | At least two timed full rehearsals |
 
 ## Tools
 
