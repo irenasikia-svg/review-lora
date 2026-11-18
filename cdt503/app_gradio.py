@@ -18,7 +18,6 @@ import argparse
 import json
 import os
 import queue
-import re
 import tempfile
 import sys
 import threading
@@ -32,7 +31,8 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.join(ROOT, "cdt503/scripts"))
 from aspects_en import ASPECT_EN, en  # noqa: E402
 import product_report  # noqa: E402
-from common import ASPECTS, SENTIMENTS, parse_output  # noqa: E402
+from common import ASPECTS  # noqa: E402
+from demo_render import CSS, esc, result_card  # noqa: E402
 
 STUDENT = "mlx-community/Qwen3-1.7B-bf16"
 MAX_CHARS = 300
@@ -53,28 +53,6 @@ EXAMPLES = [
     "收到就是坏的，开不了机，客服一直推脱不给换",                                          # 原始模型漏了"服务"
     "好评！用了三天就坏了，质量真是\"好\"啊",                                              # 刁钻：反讽，两个模型都识别为差评
 ]
-
-
-def diagnose(raw: str):
-    """输出不合格时，说清楚具体违反了哪条规则。和 scripts/demo_server.py 的逻辑一致。"""
-    text = re.sub(r"<think>.*?</think>", "", raw, flags=re.S).strip()
-    match = re.search(r"\{.*\}", text, flags=re.S)
-    if not match:
-        return ["No JSON object found in the output"]
-    try:
-        obj = json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return ["Invalid JSON syntax (the output may have been cut off)"]
-    problems = []
-    if obj.get("整体情感") not in SENTIMENTS:
-        problems.append(f"Overall sentiment “{obj.get('整体情感')}” is not 正面/负面")
-    for a in obj.get("方面", []) if isinstance(obj.get("方面"), list) else []:
-        if isinstance(a, dict):
-            if a.get("方面") not in ASPECTS:
-                problems.append(f"Aspect “{a.get('方面')}” is not in the allowed list")
-            if a.get("情感") not in SENTIMENTS:
-                problems.append(f"Sentiment “{a.get('情感')}” is not 正面/负面")
-    return problems or ["Missing fields or wrong types"]
 
 
 class Engine:
@@ -189,69 +167,6 @@ def highlight(text, parsed):
     return out
 
 
-def esc(s):
-    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-def card(result):
-    raw, ms = result["raw"], result["ms"]
-    parsed = parse_output(raw)
-    html = ['<div class="rl-card">']
-    if parsed:
-        senti = "pos" if parsed["整体情感"] == "正面" else "neg"
-        html.append(f'<div class="rl-row"><span class="rl-badge ok">✓ Valid JSON</span>'
-                    f'<span class="rl-badge {senti}">Overall: {"positive" if senti == "pos" else "negative"}</span>'
-                    f'<span class="rl-ms">{ms / 1000:.2f} s</span></div>')
-        if parsed["方面"]:
-            html.append('<table class="rl-table"><tr><th>Aspect</th><th>Opinion</th><th></th></tr>')
-            for a in parsed["方面"]:
-                s = "pos" if a["情感"] == "正面" else "neg"
-                html.append(f'<tr><td><b>{esc(en(a["方面"]))}</b><br><small>{esc(a["方面"])}</small></td>'
-                            f'<td>{esc(a["观点"])}</td><td class="rl-{s}">{"+ positive" if s == "pos" else "− negative"}</td></tr>')
-            html.append("</table>")
-        else:
-            html.append('<p class="rl-muted">No specific aspect mentioned.</p>')
-    else:
-        html.append(f'<div class="rl-row"><span class="rl-badge bad">✗ Invalid output</span>'
-                    f'<span class="rl-ms">{ms / 1000:.2f} s</span></div>')
-        html.append('<div class="rl-problems">A program cannot use this output:<ul>'
-                    + "".join(f"<li>{esc(p)}</li>" for p in diagnose(raw)) + "</ul></div>")
-    html.append(f'<details><summary>Raw model output</summary><pre>{esc(raw)}</pre></details></div>')
-    return "".join(html), parsed
-
-
-CSS = """
-.rl-card { font-size: 15px; }
-.rl-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-.rl-badge { font-size: 13px; font-weight: 600; border-radius: 6px; padding: 2px 9px; }
-.rl-badge.ok, .rl-badge.pos { background: #e3f4ea; color: #1f8a4c; }
-.rl-badge.neg { background: #fbe7e3; color: #c2412d; }
-.rl-badge.bad { background: #fdf0d9; color: #a15c00; }
-.rl-ms { margin-left: auto; font-size: 13px; opacity: .7; font-variant-numeric: tabular-nums; }
-.rl-table { width: 100%; border-collapse: collapse; }
-.rl-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; }
-.rl-table td { padding: 6px 4px; border-top: 1px solid rgba(128,128,128,.25); vertical-align: top; }
-.rl-pos { color: #1f8a4c; white-space: nowrap; } .rl-neg { color: #c2412d; white-space: nowrap; }
-.rl-problems { background: #fdf0d9; color: #a15c00; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
-.rl-problems ul { margin: 4px 0 0; }
-.rl-muted { opacity: .65; }
-.rl-card pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; }
-.rl-lora { border: 2px solid #3b5bdb !important; border-radius: 12px; padding: 10px 12px !important; }
-.pr-card { font-size: 15px; }
-.pr-card .pos { color: #1f8a4c; } .pr-card .neg { color: #c2412d; }
-.pr-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px; }
-.pr-kpis div { border: 1px solid rgba(128,128,128,.25); border-radius: 10px; padding: 8px 12px; }
-.pr-kpis b { display: block; font-size: 26px; line-height: 1.2; }
-.pr-kpis span { font-size: 12px; opacity: .7; }
-.pr-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 4px 0 14px; }
-.pr-bar .pos { background: #3cb371; } .pr-bar .neg { background: #e8735a; }
-.pr-chip { display: inline-block; border-radius: 999px; padding: 1px 10px; margin: 0 4px 4px 0; font-size: 14px; }
-.pr-chip.pos { background: #e3f4ea; } .pr-chip.neg { background: #fbe7e3; }
-.pr-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-.pr-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; }
-.pr-table td { padding: 6px 4px; border-top: 1px solid rgba(128,128,128,.25); vertical-align: top; }
-.pr-muted { opacity: .65; font-size: 13px; }
-"""
 COLOR_MAP = {f"{v} +": "#3cb371" for v in ASPECT_EN.values()} | {f"{v} −": "#e8735a" for v in ASPECT_EN.values()}
 
 
@@ -275,8 +190,8 @@ def build_ui(engine, adapter_label):
         except Exception as e:  # noqa: BLE001
             msg = f'<div class="rl-problems">Something went wrong ({esc(type(e).__name__)}). Please try again.</div>'
             return msg, [(text, None)], msg, [(text, None)]
-        base_html, base_p = card(out["base"])
-        lora_html, lora_p = card(out["lora"])
+        base_html, base_p = result_card(out["base"], text)
+        lora_html, lora_p = result_card(out["lora"], text)
         return base_html, highlight(text, base_p), lora_html, highlight(text, lora_p)
 
     def report(text, upload, sample, progress=gr.Progress()):
