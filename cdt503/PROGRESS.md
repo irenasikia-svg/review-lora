@@ -21,11 +21,14 @@
    主结果、调参噪声阈值（0.01 → 0.02）、学习率段落、局限性、结论、摘要都同步改了；qa_prep Q9/Q10/Q13/Q14 和速查表、slides 第 6/7 页已同步；
    重新编译仍是 6 页
 2. ~~商品报告页写进报告~~ **已完成**（11-18）：报告 III-E 加了一段、摘要加了半句；演示脚本加了 15 秒报告段（上台前先生成好 Hotel 报告）；qa_prep 加了 Q22；数字来自 `cdt503/results/product_report/`（`scripts/product_report_samples.py` 离线生成）。第 6 页右栏还空一半，想加报告页截图或 `results/product_report/hotel/aspects.png` 条形图都放得下
-3. **推送**：商品报告写进报告的提交还没推，推送前问用户
+3. **推送**：每次推送前问用户
+3a. ~~演示页打磨~~ **已完成**（11-18）：系统字体、分步揭晓动画、商品报告示例文件；审查修复（排队异步、离开的请求取消）
+3b. ~~PPT 初版 + 讲稿~~ **已完成**（11-18）：`cdt503/presentation/CDT503_BeyondStarRatings_slides.pptx`（9 页，明亮简洁），生成脚本 `cdt503/presentation/deck/build.sh`，讲稿内容在 `deck/speech.js`（同时生成 PPT 备注和 `speech_script.md`）。注意：pptxgenjs 写的图表 Keynote 显示空白，所以图表由 `deck/add_charts.py` 用 python-pptx 加；检查渲染用 Keynote 导出 PDF
+3c. **交付材料文件夹** `~/Documents/503/`（11-18 整理）：报告 PDF + TeXPage 源码、PPT、讲稿/问答/演示脚本（docx）、截图、样例、分工、代码压缩包、权重备份；`README.md` 是索引。仓库里改了东西要重新复制过去
 4. **用户自己做的**：
-   - 演示截图存 `cdt503/figures/demo_screenshot.png`（页面现在有两个标签页，截"Compare one review"页的第 1 个示例"果子特别棒……"），然后重新编译、检查第 5–6 页
+   - ~~演示截图~~ 已用真实模型截好（`cdt503/figures/demo_screenshot.png`，报告图 6）
    - 在家试 `--share`、录备用视频（步骤见 `cdt503/DEMO.md`）
-   - 做 PPT、计时彩排
+   - 通读 PPT 初版、按自己的习惯改讲稿、计时彩排
 5. 小清理：`cdt503/results/baselines_cost_smoke/` 是冒烟测试产物，可以加进 `.gitignore`
 
 ## 已完成（都已提交）
