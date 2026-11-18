@@ -12,3 +12,4 @@ cdt503/results/smoke/
 cdt503/report/texpage.zip
 backups/
 cdt503/results/baselines_cost_smoke/
+.gradio/

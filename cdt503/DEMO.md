@@ -65,6 +65,8 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 ## 现场说明要点
 
 - 页面上左边是原始模型、右边是微调后：**重点看左边的 "Invalid output" 和具体原因**，这是微调最直观的效果
+- 点 Analyze 后是分步出结果的：左边先显示 "Base model is reading…"（原文上有光带扫过），左边出结果后右边再开始扫。这反映的是真实顺序——同一个模型先不带适配器答一次，再带适配器答一次；可以边等边说 "first without our adapter, now with it"
+- 人多时每个人会先看到 "Waiting in line — n requests ahead of you"，轮到自己才开始扫描
 - 一次只处理一个请求，其他人排队。实测每个请求约 4 秒（原始模型和微调后各生成一次）；
   12 人同时点时，第 12 个人要等约 50 秒，全部成功、没有出错。全班 30 人同时用，最后一个人约等 2 分钟——
   可以提前告诉同学"人多时要排队"，或者请大家分批试
@@ -88,7 +90,7 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 
 ## 商品报告页（Product report）
 
-第二个标签页：粘贴一批评论（一行一条）、上传 CSV/TXT，或选内置样例（Hotel / Tablet / Fruit，各 150 条没用过的评论），
+第二个标签页：粘贴一批评论（一行一条）、上传 CSV/TXT，或点上传框下面的示例文件（Hotel / Tablet / Fruit，各 150 条没用过的评论；点一下就装进上传框，点文件名旁的 ↓ 能下载下来看格式），
 点 Generate report，模型逐条分析后给出：好评/差评比例、最受好评和最常被抱怨的方面、每个方面的好差评次数和原文观点、
 条形图，以及逐条结果 CSV 下载。
 
@@ -103,7 +105,7 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 
   原数据集每类都是人为凑成好差评各半，所以好评率本身没意义，看的是和星级的一致程度
 - **不能和训练同时开**：报告是批量生成，和训练叠加会 GPU 内存不足，两边一起崩（11-17 实际发生过）
-- 现场建议只由讲台电脑演示这一页，内置样例最稳：**上台前在另一个标签页生成好 Hotel 报告**，演示时切过去讲，不现场等 2 分钟（见 `presentation/demo_script.md`）
+- 现场建议只由讲台电脑演示这一页，内置示例文件最稳：**上台前在另一个标签页点 Hotel 示例文件、生成好报告**，演示时切过去讲，不现场等 2 分钟（见 `presentation/demo_script.md`）
 
 ## 录制备用视频
 

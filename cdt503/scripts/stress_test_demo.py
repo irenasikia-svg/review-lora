@@ -27,7 +27,7 @@ def main():
         start = time.time()
         try:
             out = client.predict(EXAMPLES[i % len(EXAMPLES)], api_name="/analyze")
-            ok = "rl-card" in out[2]  # LoRA 一栏正常出了结果卡片
+            ok = "rl-card" in out[1]  # LoRA 一栏正常出了结果卡片
             return i, time.time() - start, "ok" if ok else "unexpected output"
         except Exception as e:  # noqa: BLE001
             return i, time.time() - start, f"error: {e}"
@@ -47,7 +47,7 @@ def main():
     for label, text in [("空输入", ""), ("超长输入（500 字）", "屏幕很清晰，" * 100)]:
         try:
             out = client.predict(text, api_name="/analyze")
-            print(f"{label}：正常返回（{'有结果' if out and 'rl-card' in str(out[2]) else '无结果，页面会显示提示'}）")
+            print(f"{label}：正常返回（{'有结果' if out and 'rl-card' in str(out[1]) else '无结果，页面会显示提示'}）")
         except Exception as e:  # noqa: BLE001
             print(f"{label}：报错 {e}")
 

@@ -133,7 +133,7 @@ CSS = """
 .rl-badge.bad { background: rgba(214,130,0,.14); color: #a15c00; }
 .rl-ms { margin-left: auto; font-size: 13px; opacity: .65; font-variant-numeric: tabular-nums; }
 .rl-review { font-size: 16px; line-height: 2; padding: 10px 12px; margin-bottom: 10px; border-radius: 10px;
-  background: var(--background-fill-secondary); }
+  background: rgba(59,91,219,.06); }
 .rl-review mark { color: inherit; border-radius: 4px; padding: 1px 2px;
   animation: rl-mark .5s ease-out both; animation-delay: calc(var(--i) * 140ms + 150ms); }
 .rl-review mark.pos { background: rgba(31,138,76,.20); }
@@ -142,8 +142,11 @@ CSS = """
   animation: rl-in .4s ease-out both; animation-delay: calc(var(--i) * 140ms + 300ms); }
 .rl-tag.pos { color: #1f8a4c; } .rl-tag.neg { color: #c2412d; }
 .rl-table { width: 100%; border-collapse: collapse; }
-.rl-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; }
-.rl-table td { padding: 6px 4px; border-top: 1px solid var(--border-color-primary); vertical-align: top; }
+/* 盖掉 Gradio 给 HTML 表格加的深色全边框，只留行间细线 */
+.rl-table, .rl-table tr, .rl-table th, .rl-table td, .pr-table, .pr-table tr, .pr-table th, .pr-table td {
+  border: none !important; background: none !important; }
+.rl-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; padding: 0 4px 4px; }
+.rl-table td { padding: 6px 4px; border-top: 1px solid var(--border-color-primary) !important; vertical-align: top; }
 .rl-pos { color: #1f8a4c; white-space: nowrap; } .rl-neg { color: #c2412d; white-space: nowrap; }
 .rl-problems { background: rgba(214,130,0,.12); color: #a15c00; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
 .rl-problems ul { margin: 4px 0 0; }
@@ -163,7 +166,7 @@ CSS = """
 .rl-scan::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
   background: linear-gradient(100deg, transparent 25%, rgba(59,91,219,.28) 50%, transparent 75%);
   animation: rl-sweep 1.3s ease-in-out infinite; }
-.rl-skel span { display: block; height: 12px; border-radius: 6px; margin: 8px 0; background: var(--background-fill-secondary);
+.rl-skel span { display: block; height: 12px; border-radius: 6px; margin: 8px 0; background: rgba(128,128,128,.18);
   animation: rl-pulse 1.2s ease-in-out infinite; }
 .rl-skel span:first-child { width: 70%; } .rl-skel span:last-child { width: 45%; }
 
@@ -189,6 +192,6 @@ CSS = """
 .pr-chip.pos { background: rgba(31,138,76,.12); } .pr-chip.neg { background: rgba(194,65,45,.12); }
 .pr-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
 .pr-table th { text-align: left; font-size: 12px; opacity: .6; font-weight: 500; }
-.pr-table td { padding: 6px 4px; border-top: 1px solid var(--border-color-primary); vertical-align: top; }
+.pr-table td { padding: 6px 4px; border-top: 1px solid var(--border-color-primary) !important; vertical-align: top; }
 .pr-muted { opacity: .65; font-size: 13px; }
 """

@@ -29,7 +29,7 @@ import gradio as gr
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 sys.path.insert(0, os.path.join(ROOT, "cdt503/scripts"))
-from aspects_en import ASPECT_EN, en  # noqa: E402
+from aspects_en import ASPECT_EN  # noqa: E402
 import product_report  # noqa: E402
 from common import ASPECTS  # noqa: E402
 from demo_render import (CSS, esc, problem_card, queue_card, result_card,  # noqa: E402
@@ -41,6 +41,10 @@ MAX_CHARS = 300
 SAMPLES = {name: os.path.join(ROOT, f"cdt503/demo/samples/{key}.csv")
            for name, key in [("Hotel", "hotel"), ("Tablet", "tablet"), ("Fruit", "fruit")]}
 TIMEOUT_SEC = 90
+# 中英文都用系统字体：风格一致，也不依赖外网（Soft 主题默认的 Montserrat 要从 Google 下载）
+FONT = ["-apple-system", "BlinkMacSystemFont", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+        "Noto Sans SC", "sans-serif"]
+FONT_MONO = ["ui-monospace", "SF Mono", "Menlo", "monospace"]
 
 # 按演示顺序排。实测（lr=5e-5）时原始模型在 1、2、3、4、6 上输出不合格，现场对比最直观。
 # 1–3 是真实评论，来自第 2 阶段人工标注的 100 条
@@ -212,63 +216,31 @@ def mock_output(text, lora, delay):
     return json.dumps({"整体情感": "负面" if "坏" in text or "差" in text else "正面", "方面": aspects}, ensure_ascii=False)
 
 
-# —— 渲染 ——
-def highlight(text, parsed):
-    """把抽到的"观点"在原文里标出来，交给 gr.HighlightedText。观点不是原文片段时就不标。"""
-    if not parsed:
-        return [(text, None)]
-    spans = []
-    for a in parsed["方面"]:
-        op = a["观点"]
-        i = text.find(op) if op else -1
-        if i < 0 or any(i < e and i + len(op) > s for s, e, _ in spans):
-            continue
-        spans.append((i, i + len(op), f"{en(a['方面'])} {'+' if a['情感'] == '正面' else '−'}"))
-    out, pos = [], 0
-    for s, e, label in sorted(spans):
-        if s > pos:
-            out.append((text[pos:s], None))
-        out.append((text[s:e], label))
-        pos = e
-    if pos < len(text):
-        out.append((text[pos:], None))
-    return out
-
-
-COLOR_MAP = {f"{v} +": "#3cb371" for v in ASPECT_EN.values()} | {f"{v} −": "#e8735a" for v in ASPECT_EN.values()}
-
-
 def build_ui(engine, adapter_label):
     def analyze(text):
+        """生成器：每 yield 一次，页面上两张卡片就刷新一次（排队 → 扫描 → 结果）。"""
         text = (text or "").strip()
         if not text:
             gr.Warning("Please type a review first.")
-            return gr.skip(), gr.skip(), gr.skip(), gr.skip()
+            yield gr.skip(), gr.skip()
+            return
         if len(text) > MAX_CHARS:
             gr.Info(f"Review truncated to {MAX_CHARS} characters.")
             text = text[:MAX_CHARS]
         if not engine.ready.is_set():
             gr.Warning("The model is still warming up — please try again in a few seconds.")
-            return gr.skip(), gr.skip(), gr.skip(), gr.skip()
+            yield gr.skip(), gr.skip()
+            return
         if engine.error:
-            msg = f'<div class="rl-problems">The model failed to load: {esc(engine.error)}</div>'
-            return msg, [(text, None)], msg, [(text, None)]
-        try:
-            job = engine.submit(text)
-            out = {"base": job.base.result(timeout=TIMEOUT_SEC), "lora": job.lora.result(timeout=TIMEOUT_SEC)}
-        except Exception as e:  # noqa: BLE001
-            msg = f'<div class="rl-problems">Something went wrong ({esc(type(e).__name__)}). Please try again.</div>'
-            return msg, [(text, None)], msg, [(text, None)]
-        base_html, base_p = result_card(out["base"], text)
-        lora_html, lora_p = result_card(out["lora"], text)
-        return base_html, highlight(text, base_p), lora_html, highlight(text, lora_p)
+            msg = problem_card(f"The model failed to load: {engine.error}")
+            yield msg, msg
+            return
+        yield from analyze_steps(engine, text)
 
-    def report(text, upload, sample, progress=gr.Progress()):
+    def report(text, upload, progress=gr.Progress()):
         rows = product_report.read_reviews(text, upload)
-        if sample and sample in SAMPLES:
-            rows += product_report.read_reviews("", SAMPLES[sample])
         if not rows:
-            gr.Warning("Paste some reviews, upload a file, or pick a built-in sample.")
+            gr.Warning("Paste some reviews, upload a file, or click a sample file.")
             return gr.skip(), gr.skip(), gr.skip()
         if len(rows) > product_report.MAX_REVIEWS:
             gr.Info(f"Using the first {product_report.MAX_REVIEWS} of {len(rows)} reviews.")
@@ -290,7 +262,8 @@ def build_ui(engine, adapter_label):
         rep = product_report.build_report(texts, raws, labels)
         csv_path = os.path.join(tempfile.mkdtemp(prefix="review_report_"), "review_report.csv")
         product_report.to_csv(csv_path, texts, rep, labels)
-        return product_report.render_html(rep), product_report.plot(rep), csv_path
+        return (product_report.render_html(rep), gr.update(value=product_report.plot(rep), visible=True),
+                gr.update(value=csv_path, visible=True))
 
     with gr.Blocks(title="Beyond Star Ratings — demo") as demo:
         gr.Markdown(
@@ -310,30 +283,29 @@ def build_ui(engine, adapter_label):
             with gr.Row(equal_height=False):
                 with gr.Column():
                     gr.Markdown("### Base model (no fine-tuning)")
-                    base_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
-                                                 combine_adjacent=False, show_legend=False)
-                    base_out = gr.HTML()
+                    base_out = gr.HTML(waiting_card("Results appear here"))
                 with gr.Column(elem_classes="rl-lora"):
                     gr.Markdown("### LoRA fine-tuned")
-                    lora_hl = gr.HighlightedText(label="Opinions found in the review", color_map=COLOR_MAP,
-                                                 combine_adjacent=False, show_legend=False)
-                    lora_out = gr.HTML()
+                    lora_out = gr.HTML(waiting_card("Results appear here"))
         with gr.Tab("Product report"):
             gr.Markdown(
                 "Give the model **many reviews of one product** — paste them (one per line), upload a CSV/TXT, "
-                "or load a built-in sample. The fine-tuned model reads every review and summarises what customers "
+                "or click a sample file. The fine-tuned model reads every review and summarises what customers "
                 f"praise and complain about. Up to {product_report.MAX_REVIEWS} reviews, about 0.75 s each.")
             with gr.Row():
                 rep_text = gr.Textbox(label="Reviews (one per line)", lines=8, max_lines=14, scale=3)
                 with gr.Column(scale=2, min_width=220):
                     rep_file = gr.File(label="…or upload CSV / TXT", file_types=[".csv", ".txt"], type="filepath")
-                    rep_sample = gr.Dropdown(["(none)"] + list(SAMPLES), value="(none)",
-                                             label="…or a built-in sample (150 unseen reviews)")
+                    # 点一下示例就把 CSV 装进上传框：能看到文件格式，也能下载下来照着改
+                    gr.Examples([[p] for p in SAMPLES.values()], inputs=rep_file,
+                                example_labels=[f"{name} · 150 reviews" for name in SAMPLES],
+                                label="…or click a sample file (150 unseen reviews each)")
                     rep_btn = gr.Button("Generate report", variant="primary")
             rep_html = gr.HTML()
             with gr.Row():
-                rep_plot = gr.Plot(label="Aspects by sentiment")
-                rep_csv = gr.File(label="Download per-review results (CSV)")
+                # 生成报告前先藏起来，免得显示空的占位图标；图自带标题，所以不再加标签
+                rep_plot = gr.Plot(show_label=False, visible=False)
+                rep_csv = gr.File(label="Download per-review results (CSV)", visible=False)
             gr.Markdown("<small>Built-in samples come from the dataset, which mixes positive and negative reviews "
                         "roughly 50/50 by design, so their positive share is not that of a real product.</small>")
         with gr.Accordion("The 16 aspects the model may choose from", open=False):
@@ -341,9 +313,12 @@ def build_ui(engine, adapter_label):
                 f"| {ASPECT_EN[k]} | {k} | {v} |" for k, v in ASPECTS.items()))
         gr.Markdown("<small>One request at a time on a single GPU — if many people try at once, you will wait in a "
                     "short queue.</small>")
-        btn.click(analyze, box, [base_out, base_hl, lora_out, lora_hl])
-        box.submit(analyze, box, [base_out, base_hl, lora_out, lora_hl])
-        rep_btn.click(report, [rep_text, rep_file, rep_sample], [rep_html, rep_plot, rep_csv])
+        # 自己画排队/扫描状态，所以关掉 Gradio 自带的进度遮罩；并发调高，让每个人都能马上看到自己的排队位置，
+        # 真正的推理仍由推理线程一个一个做
+        btn.click(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=16,
+                  api_name="analyze")
+        box.submit(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=16)
+        rep_btn.click(report, [rep_text, rep_file], [rep_html, rep_plot, rep_csv])
     return demo
 
 
@@ -364,8 +339,9 @@ def main():
         print(f"模型加载失败：{engine.error}", flush=True)  # 网页仍然打开，并在页面上提示
     demo = build_ui(engine, os.path.relpath(args.adapter, ROOT) if not args.mock else "mock")
     demo.queue(default_concurrency_limit=1, max_size=40)
+    theme = gr.themes.Soft(primary_hue="blue", font=FONT, font_mono=FONT_MONO)
     demo.launch(server_name=args.host, server_port=args.port, share=args.share, css=CSS,
-                theme=gr.themes.Soft(), show_error=True)
+                theme=theme, show_error=True)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英文就是 B 要说的话；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
 
 **上台前**：演示已启动、终端显示"预热完成"；浏览器放大到投影看得清；屏幕角落放好扫码二维码。
-**另开一个浏览器标签页**，切到 **Product report**，选 **Hotel** 样例点 Generate report，等约 2 分钟出结果后**别刷新**——演示时直接切过去讲，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
+**另开一个浏览器标签页**，切到 **Product report**，点上传框下面的 **Hotel · 150 reviews** 示例文件，再点 Generate report，等约 2 分钟出结果后**别刷新**——演示时直接切过去讲，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
 
 ---
 
@@ -15,7 +15,7 @@ A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英
 
 A 点第 1 个示例 *果子特别棒没有伤比超市便宜又好吃*，再点 **Analyze**。
 
-预期：左边 **✗ Invalid output — Aspect "味道" is not in the allowed list**；右边 ✓ Taste +、Price +，原文里高亮。
+预期：先是左边扫描、右边等待；约 2 秒后左边出 **✗ Invalid output — Aspect "味道" is not in the allowed list**，右边开始扫描；再约 2 秒右边出 ✓ Taste +、Price +，原文里的观点依次亮起。B 可以在右边扫描时说 "…and now the same model with our adapter"。
 
 > "A customer says the fruit is great and cheaper than the supermarket. The base model invents its own aspect name, 'flavour', which is not in our list — so a program can't count it. The fine-tuned model uses the allowed names, Taste and Price, and highlights the exact words."
 
