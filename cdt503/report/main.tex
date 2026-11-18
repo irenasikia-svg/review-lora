@@ -406,8 +406,7 @@ mentions) and Service (35) for the hotel, Defect (43) and Size \& weight (38) fo
   \IfFileExists{figures/demo_screenshot.png}{\includegraphics[width=\figwidth]{demo_screenshot}}{%
   \fbox{\parbox[c][3.2cm][c]{0.9\columnwidth}{\centering\small [Gradio screenshot: save as \texttt{figures/demo\_screenshot.png}]}}}%
 }
-\caption{The Gradio demo: the base model (left) invents an aspect outside the schema; the LoRA model (right) returns
-valid, highlighted aspects.}
+\caption{The Gradio demo on review~1 (``the fruit is great, no bruises, cheaper than the supermarket and tasty''): the base model (top) invents the aspect ``flavour'', which is not in the schema (it should be Taste); the LoRA model (bottom) returns valid output and highlights each opinion in the review.}
 \label{fig:demo}
 \end{figure}
 

@@ -13,3 +13,5 @@ cdt503/report/texpage.zip
 backups/
 cdt503/results/baselines_cost_smoke/
 .gradio/
+node_modules/
+cdt503/presentation/deck/charts.json
