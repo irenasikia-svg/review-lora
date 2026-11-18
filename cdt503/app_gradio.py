@@ -32,7 +32,8 @@ sys.path.insert(0, os.path.join(ROOT, "cdt503/scripts"))
 from aspects_en import ASPECT_EN, en  # noqa: E402
 import product_report  # noqa: E402
 from common import ASPECTS  # noqa: E402
-from demo_render import CSS, esc, result_card  # noqa: E402
+from demo_render import (CSS, esc, problem_card, queue_card, result_card,  # noqa: E402
+                         scanning_card, waiting_card)
 
 STUDENT = "mlx-community/Qwen3-1.7B-bf16"
 MAX_CHARS = 300
@@ -55,14 +56,26 @@ EXAMPLES = [
 ]
 
 
+class CompareJob:
+    """一条单条对比任务。推理线程依次发三个信号：开始处理 → 原始模型完成 → LoRA 完成，页面据此分步刷新。"""
+
+    def __init__(self, ticket):
+        self.ticket = ticket  # 第几个进队的任务（从 1 开始），用来算前面还有几个
+        self.started = threading.Event()
+        self.base, self.lora = Future(), Future()
+
+
 class Engine:
     """专门的推理线程。所有 MLX 调用都在这个线程里发生。"""
 
-    def __init__(self, adapter, mock=False):
-        self.adapter, self.mock = adapter, mock
+    def __init__(self, adapter, mock=False, mock_delay=1.5):
+        self.adapter, self.mock, self.mock_delay = adapter, mock, mock_delay
         self.jobs = queue.Queue()
         self.ready = threading.Event()
         self.error = None
+        self._lock = threading.Lock()
+        self._issued = 0    # 发出的任务号（单条和批量都算）
+        self._finished = 0  # 已经处理完的任务数
         threading.Thread(target=self._loop, daemon=True).start()
 
     def _load(self):
@@ -83,7 +96,7 @@ class Engine:
 
     def _run(self, text, lora):
         if self.mock:
-            return mock_output(text, lora)
+            return mock_output(text, lora, self.mock_delay)
         for m, s in zip(self.layers, self.scales):
             m.scale = s if lora else 0.0
         return self._generate(text)
@@ -100,39 +113,94 @@ class Engine:
             self.error = e
         self.ready.set()
         while True:
-            kind, payload, fut = self.jobs.get()
+            kind, payload, target = self.jobs.get()
             try:
-                if kind == "compare":  # 单条评论：原始模型和 LoRA 各生成一次
-                    out = {}
-                    for key, lora in (("base", False), ("lora", True)):
+                if kind == "compare":  # 单条评论：原始模型和 LoRA 各生成一次，各自一完成就交出去
+                    target.started.set()
+                    for fut, lora in ((target.base, False), (target.lora, True)):
                         start = time.time()
                         raw = self._run(payload, lora)
-                        out[key] = {"raw": raw, "ms": int((time.time() - start) * 1000)}
-                    fut.set_result(out)
+                        fut.set_result({"raw": raw, "ms": int((time.time() - start) * 1000)})
                 else:  # "batch"：商品报告，一组评论只用 LoRA 模型
                     if self.mock:
-                        fut.set_result([mock_output(t, True) for t in payload])
+                        target.set_result([mock_output(t, True, 0.02) for t in payload])
                     else:
                         for m, s in zip(self.layers, self.scales):
                             m.scale = s
-                        fut.set_result(self._extract(payload))
+                        target.set_result(self._extract(payload))
             except Exception as e:  # noqa: BLE001
-                fut.set_exception(e)
+                for fut in (target.base, target.lora) if kind == "compare" else (target,):
+                    if not fut.done():
+                        fut.set_exception(e)
+            finally:
+                with self._lock:
+                    self._finished += 1
 
     def submit(self, text):
-        fut = Future()
-        self.jobs.put(("compare", text, fut))
-        return fut
+        with self._lock:  # 发号和进队在同一把锁里，保证号码顺序就是排队顺序
+            self._issued += 1
+            job = CompareJob(self._issued)
+            self.jobs.put(("compare", text, job))
+        return job
 
     def submit_batch(self, texts):
         fut = Future()
-        self.jobs.put(("batch", texts, fut))
+        with self._lock:
+            self._issued += 1
+            self.jobs.put(("batch", texts, fut))
         return fut
 
+    def ahead(self, job):
+        """前面还有几个任务没做完（包括正在做的那个）。"""
+        with self._lock:
+            return max(0, job.ticket - 1 - self._finished)
 
-def mock_output(text, lora):
-    """--mock：不加载模型，造一个假结果，只用来检查界面布局。"""
-    time.sleep(0.3)
+
+def analyze_steps(engine, text, timeout=TIMEOUT_SEC):
+    """单条对比的分步刷新：依次产出 (左卡片 HTML, 右卡片 HTML)。
+    排队中 → 原始模型扫描中 → 左边出结果、LoRA 扫描中 → 两边结果。超时或出错时两边显示提示并结束。"""
+    deadline = time.monotonic() + timeout
+    job = engine.submit(text)
+    shown = None
+    while not job.started.is_set():
+        n = engine.ahead(job)
+        if n > 0 and n != shown:
+            shown = n
+            yield queue_card(n), queue_card(n)
+        left = deadline - time.monotonic()
+        if left <= 0:
+            msg = problem_card("The demo is busy and your request timed out. Please try again.")
+            yield msg, msg
+            return
+        job.started.wait(min(0.4, left))
+
+    yield scanning_card(text, "Base model"), waiting_card("Waiting for the base model…")
+    try:
+        base = job.base.result(timeout=max(0.0, deadline - time.monotonic()))
+    except Exception as e:  # noqa: BLE001  超时或推理出错
+        msg = problem_card(_failure_text(e))
+        yield msg, msg
+        return
+    base_html, _ = result_card(base, text)
+    yield base_html, scanning_card(text, "LoRA model")
+    try:
+        lora = job.lora.result(timeout=max(0.0, deadline - time.monotonic()))
+    except Exception as e:  # noqa: BLE001
+        yield base_html, problem_card(_failure_text(e))
+        return
+    lora_html, _ = result_card(lora, text)
+    yield base_html, lora_html
+
+
+def _failure_text(e):
+    if isinstance(e, TimeoutError):
+        return "The model took too long to answer. Please try again."
+    return f"Something went wrong ({type(e).__name__}). Please try again."
+
+
+def mock_output(text, lora, delay):
+    """--mock：不加载模型，造一个假结果，只用来检查界面布局。delay 模拟生成用时（秒）。"""
+    time.sleep(delay)
     if not lora:
         return '{"整体情感": "中性", "方面": [{"方面": "舒适度", "观点": "很舒服", "情感": "正面"}]}'
     aspects = []
@@ -186,7 +254,8 @@ def build_ui(engine, adapter_label):
             msg = f'<div class="rl-problems">The model failed to load: {esc(engine.error)}</div>'
             return msg, [(text, None)], msg, [(text, None)]
         try:
-            out = engine.submit(text).result(timeout=TIMEOUT_SEC)
+            job = engine.submit(text)
+            out = {"base": job.base.result(timeout=TIMEOUT_SEC), "lora": job.lora.result(timeout=TIMEOUT_SEC)}
         except Exception as e:  # noqa: BLE001
             msg = f'<div class="rl-problems">Something went wrong ({esc(type(e).__name__)}). Please try again.</div>'
             return msg, [(text, None)], msg, [(text, None)]
