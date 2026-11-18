@@ -16,6 +16,12 @@ sys.path.insert(0, __file__.rsplit("/scripts/", 1)[0])
 from app_gradio import EXAMPLES  # noqa: E402
 
 
+def ok_output(out):
+    """两栏都是真正的结果卡片（rl-done，"Invalid output" 卡片也算——那是模型的真实回答）才算成功；
+    排队、超时、出错卡片都不算。"""
+    return bool(out) and len(out) >= 2 and all("rl-done" in str(h) for h in out[:2])
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", default="http://127.0.0.1:7860/")
@@ -27,7 +33,7 @@ def main():
         start = time.time()
         try:
             out = client.predict(EXAMPLES[i % len(EXAMPLES)], api_name="/analyze")
-            ok = "rl-card" in out[1]  # LoRA 一栏正常出了结果卡片
+            ok = ok_output(out)
             return i, time.time() - start, "ok" if ok else "unexpected output"
         except Exception as e:  # noqa: BLE001
             return i, time.time() - start, f"error: {e}"
@@ -47,7 +53,7 @@ def main():
     for label, text in [("空输入", ""), ("超长输入（500 字）", "屏幕很清晰，" * 100)]:
         try:
             out = client.predict(text, api_name="/analyze")
-            print(f"{label}：正常返回（{'有结果' if out and 'rl-card' in str(out[1]) else '无结果，页面会显示提示'}）")
+            print(f"{label}：正常返回（{'有结果' if ok_output(out) else '无结果，页面会显示提示'}）")
         except Exception as e:  # noqa: BLE001
             print(f"{label}：报错 {e}")
 

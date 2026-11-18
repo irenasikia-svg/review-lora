@@ -15,6 +15,7 @@
   - 一次只处理一个请求（GPU 只有一块），其他人排队；任何异常都变成页面上的提示，不会让程序崩溃
 """
 import argparse
+import asyncio
 import json
 import os
 import queue
@@ -67,6 +68,10 @@ class CompareJob:
         self.ticket = ticket  # 第几个进队的任务（从 1 开始），用来算前面还有几个
         self.started = threading.Event()
         self.base, self.lora = Future(), Future()
+        self.cancelled = False  # 页面关了或超时了：还没跑的部分不用再跑
+
+    def cancel(self):
+        self.cancelled = True
 
 
 class Engine:
@@ -120,8 +125,12 @@ class Engine:
             kind, payload, target = self.jobs.get()
             try:
                 if kind == "compare":  # 单条评论：原始模型和 LoRA 各生成一次，各自一完成就交出去
+                    if target.cancelled:  # 等的人已经走了，不占 GPU
+                        continue
                     target.started.set()
                     for fut, lora in ((target.base, False), (target.lora, True)):
+                        if target.cancelled:
+                            break
                         start = time.time()
                         raw = self._run(payload, lora)
                         fut.set_result({"raw": raw, "ms": int((time.time() - start) * 1000)})
@@ -159,41 +168,59 @@ class Engine:
         with self._lock:
             return max(0, job.ticket - 1 - self._finished)
 
+    def progress(self):
+        """已经处理完的任务数。排队时只要它在涨，就说明队伍在动，不算超时。"""
+        with self._lock:
+            return self._finished
 
-def analyze_steps(engine, text, timeout=TIMEOUT_SEC):
+
+async def _wait(fut, timeout):
+    """在事件循环里等推理线程的 Future，不占线程；shield 防止超时时把推理线程那边的 Future 一起取消。"""
+    return await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(fut)), timeout)
+
+
+async def analyze_steps(engine, text, timeout=TIMEOUT_SEC):
     """单条对比的分步刷新：依次产出 (左卡片 HTML, 右卡片 HTML)。
-    排队中 → 原始模型扫描中 → 左边出结果、LoRA 扫描中 → 两边结果。超时或出错时两边显示提示并结束。"""
-    deadline = time.monotonic() + timeout
+    排队中 → 原始模型扫描中 → 左边出结果、LoRA 扫描中 → 两边结果。超时或出错时两边显示提示并结束。
+    用 async：几十个人同时排队也只是事件循环里的协程，不占 Gradio 的工作线程。"""
     job = engine.submit(text)
-    shown = None
-    while not job.started.is_set():
-        n = engine.ahead(job)
-        if n > 0 and n != shown:
-            shown = n
-            yield queue_card(n), queue_card(n)
-        left = deadline - time.monotonic()
-        if left <= 0:
-            msg = problem_card("The demo is busy and your request timed out. Please try again.")
+    try:
+        # 排队时的超时按"队伍多久没动"算：人多时排得久不算超时，推理线程卡住才算
+        shown, seen, since = None, engine.progress(), time.monotonic()
+        while not job.started.is_set():
+            n = engine.ahead(job)
+            if n > 0 and n != shown:
+                shown = n
+                yield queue_card(n), queue_card(n)
+            p = engine.progress()
+            if p != seen:
+                seen, since = p, time.monotonic()
+            elif time.monotonic() - since >= timeout:
+                msg = problem_card("The demo is busy and your request timed out. Please try again.")
+                yield msg, msg
+                return
+            await asyncio.sleep(0.1)
+
+        yield scanning_card(text, "Base model"), waiting_card("Waiting for the base model…")
+        try:
+            base = await _wait(job.base, timeout)
+        except Exception as e:  # noqa: BLE001  超时或推理出错
+            msg = problem_card(_failure_text(e))
             yield msg, msg
             return
-        job.started.wait(min(0.4, left))
-
-    yield scanning_card(text, "Base model"), waiting_card("Waiting for the base model…")
-    try:
-        base = job.base.result(timeout=max(0.0, deadline - time.monotonic()))
-    except Exception as e:  # noqa: BLE001  超时或推理出错
-        msg = problem_card(_failure_text(e))
-        yield msg, msg
-        return
-    base_html, _ = result_card(base, text)
-    yield base_html, scanning_card(text, "LoRA model")
-    try:
-        lora = job.lora.result(timeout=max(0.0, deadline - time.monotonic()))
-    except Exception as e:  # noqa: BLE001
-        yield base_html, problem_card(_failure_text(e))
-        return
-    lora_html, _ = result_card(lora, text)
-    yield base_html, lora_html
+        base_html, _ = result_card(base, text)
+        yield base_html, scanning_card(text, "LoRA model")
+        try:
+            lora = await _wait(job.lora, timeout)
+        except Exception as e:  # noqa: BLE001
+            yield base_html, problem_card(_failure_text(e))
+            return
+        lora_html, _ = result_card(lora, text)
+        yield base_html, lora_html
+    finally:
+        # 正常结束、超时、出错、页面被关掉（生成器被关闭）都会走到这里：没跑完的部分取消掉
+        if not job.lora.done():
+            job.cancel()
 
 
 def _failure_text(e):
@@ -217,8 +244,8 @@ def mock_output(text, lora, delay):
 
 
 def build_ui(engine, adapter_label):
-    def analyze(text):
-        """生成器：每 yield 一次，页面上两张卡片就刷新一次（排队 → 扫描 → 结果）。"""
+    async def analyze(text):
+        """异步生成器：每 yield 一次，页面上两张卡片就刷新一次（排队 → 扫描 → 结果）。"""
         text = (text or "").strip()
         if not text:
             gr.Warning("Please type a review first.")
@@ -235,7 +262,8 @@ def build_ui(engine, adapter_label):
             msg = problem_card(f"The model failed to load: {engine.error}")
             yield msg, msg
             return
-        yield from analyze_steps(engine, text)
+        async for step in analyze_steps(engine, text):
+            yield step
 
     def report(text, upload, progress=gr.Progress()):
         rows = product_report.read_reviews(text, upload)
@@ -313,11 +341,11 @@ def build_ui(engine, adapter_label):
                 f"| {ASPECT_EN[k]} | {k} | {v} |" for k, v in ASPECTS.items()))
         gr.Markdown("<small>One request at a time on a single GPU — if many people try at once, you will wait in a "
                     "short queue.</small>")
-        # 自己画排队/扫描状态，所以关掉 Gradio 自带的进度遮罩；并发调高，让每个人都能马上看到自己的排队位置，
-        # 真正的推理仍由推理线程一个一个做
-        btn.click(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=16,
+        # 自己画排队/扫描状态，所以关掉 Gradio 自带的进度遮罩。不限并发：每个人的请求马上进推理线程的队伍、
+        # 马上看到自己的排队位置；等待是事件循环里的协程，不占线程。真正的推理仍由推理线程一个一个做
+        btn.click(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=None,
                   api_name="analyze")
-        box.submit(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=16)
+        box.submit(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=None)
         rep_btn.click(report, [rep_text, rep_file], [rep_html, rep_plot, rep_csv])
     return demo
 
