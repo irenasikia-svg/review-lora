@@ -33,8 +33,8 @@ sys.path.insert(0, os.path.join(ROOT, "cdt503/scripts"))
 from aspects_en import ASPECT_EN  # noqa: E402
 import product_report  # noqa: E402
 from common import ASPECTS  # noqa: E402
-from demo_render import (CSS, esc, problem_card, queue_card, result_card,  # noqa: E402
-                         scanning_card, waiting_card)
+from demo_render import (CSS, HEAD_JS, esc, intro_html, problem_card, queue_card,  # noqa: E402
+                         result_card, scanning_card, section_head, waiting_card)
 
 STUDENT = "mlx-community/Qwen3-1.7B-bf16"
 MAX_CHARS = 300
@@ -294,13 +294,11 @@ def build_ui(engine, adapter_label):
                 gr.update(value=csv_path, visible=True))
 
     with gr.Blocks(title="Beyond Star Ratings — demo") as demo:
-        gr.Markdown(
-            "## Beyond Star Ratings: Aspect Extraction from Chinese Reviews\n"
-            f"<small>Qwen3-1.7B + 70 MB LoRA adapter (`{adapter_label}`), fine-tuned on 1.8k reviews labelled by "
-            "Qwen3-30B · runs locally on an Apple M5 with MLX</small>")
-        with gr.Tab("Compare one review"):
-            gr.Markdown("Type a Chinese e-commerce review. The **same Qwen3-1.7B model** answers twice: once as-is, "
-                        "and once with our **LoRA adapter**.")
+        # 一整页往下滚：开头 → How it works → Results（介绍，带出场动画）→ Try it live → Product report（实机）
+        gr.HTML(intro_html())
+
+        gr.HTML(section_head("Try it live.", "The same 1.7B model answers twice: as-is, and with our LoRA adapter.", "try"))
+        with gr.Column(elem_classes="rl-window"):
             with gr.Row():
                 box = gr.Textbox(label="Review (Chinese)", lines=3, max_lines=6, scale=5,
                                  placeholder="例如：屏幕很清晰，但电池两天就没电了，客服也不理人")
@@ -315,11 +313,14 @@ def build_ui(engine, adapter_label):
                 with gr.Column(elem_classes="rl-lora"):
                     gr.Markdown("### LoRA fine-tuned")
                     lora_out = gr.HTML(waiting_card("Results appear here"))
-        with gr.Tab("Product report"):
-            gr.Markdown(
-                "Give the model **many reviews of one product** — paste them (one per line), upload a CSV/TXT, "
-                "or click a sample file. The fine-tuned model reads every review and summarises what customers "
-                f"praise and complain about. Up to {product_report.MAX_REVIEWS} reviews, about 0.75 s each.")
+            with gr.Accordion("The 16 aspects the model may choose from", open=False):
+                gr.Markdown("| Aspect | 中文 | Covers |\n|---|---|---|\n" + "\n".join(
+                    f"| {ASPECT_EN[k]} | {k} | {v} |" for k, v in ASPECTS.items()))
+
+        gr.HTML(section_head("A whole product, in one report.",
+                             f"Paste up to {product_report.MAX_REVIEWS} reviews, upload a CSV/TXT, or click a sample file. "
+                             "About 0.75 s per review.", "report"))
+        with gr.Column(elem_classes="rl-window"):
             with gr.Row():
                 rep_text = gr.Textbox(label="Reviews (one per line)", lines=8, max_lines=14, scale=3)
                 with gr.Column(scale=2, min_width=220):
@@ -336,11 +337,10 @@ def build_ui(engine, adapter_label):
                 rep_csv = gr.File(label="Download per-review results (CSV)", visible=False)
             gr.Markdown("<small>Built-in samples come from the dataset, which mixes positive and negative reviews "
                         "roughly 50/50 by design, so their positive share is not that of a real product.</small>")
-        with gr.Accordion("The 16 aspects the model may choose from", open=False):
-            gr.Markdown("| Aspect | 中文 | Covers |\n|---|---|---|\n" + "\n".join(
-                f"| {ASPECT_EN[k]} | {k} | {v} |" for k, v in ASPECTS.items()))
-        gr.Markdown("<small>One request at a time on a single GPU — if many people try at once, you will wait in a "
-                    "short queue.</small>")
+
+        gr.HTML(f'<div class="rl-foot">Han Daiyuan · Li Mingtai · Lingnan University<br>'
+                f'Qwen3-1.7B + 70 MB LoRA adapter ({esc(adapter_label)}) · runs locally on an Apple M5 with MLX · '
+                'one request at a time, so you may wait in a short queue</div>')
         # 自己画排队/扫描状态，所以关掉 Gradio 自带的进度遮罩。不限并发：每个人的请求马上进推理线程的队伍、
         # 马上看到自己的排队位置；等待是事件循环里的协程，不占线程。真正的推理仍由推理线程一个一个做
         btn.click(analyze, box, [base_out, lora_out], show_progress="hidden", concurrency_limit=None,
@@ -368,7 +368,7 @@ def main():
     demo = build_ui(engine, os.path.relpath(args.adapter, ROOT) if not args.mock else "mock")
     demo.queue(default_concurrency_limit=1, max_size=40)
     theme = gr.themes.Soft(primary_hue="blue", font=FONT, font_mono=FONT_MONO)
-    demo.launch(server_name=args.host, server_port=args.port, share=args.share, css=CSS,
+    demo.launch(server_name=args.host, server_port=args.port, share=args.share, css=CSS, head=HEAD_JS,
                 theme=theme, show_error=True)
 
 
