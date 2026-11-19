@@ -10,8 +10,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 for sub in ("cdt503", "scripts", "cdt503/scripts"):
     sys.path.insert(0, os.path.join(ROOT, sub))
 
-from demo_render import (CSS, opinion_spans, problem_card, queue_card, result_card,  # noqa: E402
-                         review_html, scanning_card)
+from demo_render import (CSS, HEAD_JS, intro_html, opinion_spans, problem_card, queue_card,  # noqa: E402
+                         result_card, review_html, scanning_card, section_head)
 
 TEXT = "屏幕很清晰，但电池两天就没电了"
 PARSED = {"整体情感": "负面", "方面": [
@@ -49,3 +49,31 @@ def test_status_cards():
 
 def test_css_has_reduced_motion():
     assert "prefers-reduced-motion" in CSS and "@keyframes rl-sweep" in CSS
+
+
+def test_intro_has_sections_and_anchor():
+    h = intro_html()
+    assert 'class="rl-hero' in h and 'id="how"' in h and 'id="results"' in h and 'href="#try"' in h
+    assert 'data-count="0.80"' in h and 'data-count="5"' in h and h.count('class="rl-feature') == 3
+
+
+def test_section_head():
+    h = section_head("Try it live", "Same model, twice.", "try")
+    assert 'id="try"' in h and "Try it live" in h and "reveal" in h
+
+
+def test_reveal_hidden_only_under_js_anim():
+    import re
+    assert "html.js-anim .reveal" in CSS
+    # 不能有以 .reveal 开头、无条件隐藏的规则（html.js-anim .reveal 这种带前提的可以）
+    assert not re.search(r"(^|\})\s*\.reveal\s*\{[^}]*opacity:\s*0", CSS, flags=re.M)
+
+
+def test_head_js_has_fallback():
+    for s in ("js-anim", "IntersectionObserver", "MutationObserver", "prefers-reduced-motion", "setTimeout"):
+        assert s in HEAD_JS
+
+
+def test_no_external_resources():
+    for part in (CSS, HEAD_JS, intro_html()):
+        assert "http://" not in part and "https://" not in part
