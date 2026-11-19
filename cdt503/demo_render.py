@@ -255,7 +255,8 @@ def section_head(title, sub, anchor):
 CSS += """
 /* ===== 风格 B（参考稿 cdt503/docs/mockups/style-b-product.html） ===== */
 body, gradio-app, .gradio-container, .main, .wrap { background: #fff !important; }
-.gradio-container { max-width: 1120px !important; margin: 0 auto !important; color: #1D1D1F; }
+/* width:100% 不能省：gradio-app 是纵向 flex，左右 auto 边距会让容器缩成内容宽度，手机上就会横向滚动 */
+.gradio-container { max-width: 1120px !important; width: 100% !important; margin: 0 auto !important; color: #1D1D1F; }
 button.primary { background: #3B5BDB !important; border-color: #3B5BDB !important; color: #fff !important; }
 button.primary:hover { background: #2F4BC0 !important; }
 .rl-sub { font-size: 21px; color: #6E6E73; max-width: 640px; margin: 0 auto; line-height: 1.5; }
@@ -317,45 +318,64 @@ html.js-anim .reveal.in { opacity: 1; transform: none; }
 # 每秒检查一次屏幕内还没出场的元素（兜底，防止卡在隐藏状态）
 HEAD_JS = """<script>
 (function () {
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  document.documentElement.classList.add("js-anim");
-  function count(el) {
-    var to = parseFloat(el.dataset.count), suf = el.dataset.suffix || "";
-    var dec = (el.dataset.count.split(".")[1] || "").length, t0 = performance.now();
-    function tick(t) {
-      var k = Math.min(1, (t - t0) / 900);
-      el.textContent = (to * (1 - Math.pow(1 - k, 3))).toFixed(dec) + suf;
-      if (k < 1) requestAnimationFrame(tick);
+  // 页面只有浅色版：系统是深色模式、网址里又没指定时，换成 ?__theme=light（Gradio 自带的开关），否则白底上是白字
+  try {
+    if (!/[?&]__theme=/.test(location.search) && window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      var u = new URL(location.href);
+      u.searchParams.set("__theme", "light");
+      location.replace(u.toString());
+      return;
     }
-    requestAnimationFrame(tick);
+  } catch (e) {}
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var root = document.documentElement;
+  try {
+    var count = function (el) {
+      var to = parseFloat(el.dataset.count), suf = el.dataset.suffix || "";
+      var dec = (el.dataset.count.split(".")[1] || "").length, t0 = performance.now();
+      var tick = function (t) {
+        var k = Math.min(1, (t - t0) / 900);
+        el.textContent = (to * (1 - Math.pow(1 - k, 3))).toFixed(dec) + suf;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    var show = function (el) {
+      if (el.classList.contains("in")) return;
+      el.classList.add("in");
+      el.querySelectorAll("[data-count]").forEach(count);
+    };
+    var io = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
+    }, { threshold: 0.15 }) : null;
+    var watch = function (node) {
+      if (!node || !node.querySelectorAll) return;
+      var list = Array.prototype.slice.call(node.querySelectorAll(".reveal:not(.in)"));
+      if (node.matches && node.matches(".reveal:not(.in)")) list.push(node);
+      list.forEach(function (el) {
+        if (el.dataset.rlWatched) return;
+        el.dataset.rlWatched = "1";
+        if (io) io.observe(el); else show(el);
+      });
+    };
+    // Gradio 的组件是后渲染的：用 MutationObserver 接住新出现的元素
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) watch(n); }); });
+    }).observe(root, { childList: true, subtree: true });
+    // 兜底：每秒把已经在屏幕内（或滚过去了）却还没出场的元素显示出来；先排下一次，再干活
+    var sweep = function () {
+      setTimeout(sweep, 1000);
+      document.querySelectorAll(".reveal:not(.in)").forEach(function (el) {
+        if (el.getBoundingClientRect().top < window.innerHeight) show(el);
+      });
+    };
+    sweep();
+    // 一切就绪后才让待出场的元素先藏起来；之后任何一步出错都撤掉，内容照常显示
+    root.classList.add("js-anim");
+    watch(document);
+  } catch (e) {
+    root.classList.remove("js-anim");
   }
-  function show(el) {
-    if (el.classList.contains("in")) return;
-    el.classList.add("in");
-    el.querySelectorAll("[data-count]").forEach(count);
-  }
-  var io = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } });
-  }, { threshold: 0.15 }) : null;
-  function watch(root) {
-    if (!root || !root.querySelectorAll) return;
-    var list = Array.prototype.slice.call(root.querySelectorAll(".reveal:not(.in)"));
-    if (root.matches && root.matches(".reveal:not(.in)")) list.push(root);
-    list.forEach(function (el) {
-      if (el.dataset.rlWatched) return;
-      el.dataset.rlWatched = "1";
-      if (io) io.observe(el); else show(el);
-    });
-  }
-  new MutationObserver(function (muts) {
-    muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) watch(n); }); });
-  }).observe(document.documentElement, { childList: true, subtree: true });
-  document.addEventListener("DOMContentLoaded", function () { watch(document); });
-  (function sweep() {
-    document.querySelectorAll(".reveal:not(.in)").forEach(function (el) {
-      if (el.getBoundingClientRect().top < window.innerHeight) show(el);
-    });
-    setTimeout(sweep, 1000);
-  })();
 })();
 </script>"""

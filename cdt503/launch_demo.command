@@ -9,6 +9,7 @@
 
 PROJECT="$HOME/claude/review-lora"
 PORT=7860
+Q="?__theme=light"   # 页面只有浅色版：网址带上这个，深色模式的手机也直接显示浅色
 TMP="${${TMPDIR:-/tmp}%/}"
 LOG="$TMP/cdt503_demo.log"
 QR_HTML="$TMP/cdt503_qr.html"
@@ -32,7 +33,7 @@ cd "$PROJECT" 2>/dev/null || fail "找不到项目文件夹 $PROJECT"
 
 if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
   step "演示已经在运行，直接打开网页"
-  show "http://127.0.0.1:$PORT"
+  show "http://127.0.0.1:$PORT/$Q"
   [[ -f "$QR_HTML" ]] && show "$QR_HTML"
   echo; read -k1 "?按任意键关闭窗口…"; exit 0
 fi
@@ -70,7 +71,7 @@ for i in {1..180}; do
 done
 curl -s -o /dev/null "http://127.0.0.1:$PORT/" || { tail -20 "$LOG"; trap - EXIT; stop; }
 step "网页已就绪，正在打开：http://127.0.0.1:$PORT"
-show "http://127.0.0.1:$PORT"
+show "http://127.0.0.1:$PORT/$Q"
 
 # —— 扫码页：优先用公网链接（最多等 40 秒），否则用局域网地址 ——
 PUBLIC=""
@@ -86,9 +87,9 @@ fi
 IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
 LAN=""; [[ -n "$IP" ]] && LAN="http://$IP:$PORT"
 if [[ -n "$PUBLIC" ]]; then
-  "$UV" run -q --with "qrcode[pil]" python cdt503/scripts/make_qr_page.py "$PUBLIC" "$QR_HTML" && show "$QR_HTML"
+  "$UV" run -q --with "qrcode[pil]" python cdt503/scripts/make_qr_page.py "$PUBLIC/$Q" "$QR_HTML" && show "$QR_HTML"
 elif [[ -n "$LAN" ]]; then
-  "$UV" run -q --with "qrcode[pil]" python cdt503/scripts/make_qr_page.py "$LAN" "$QR_HTML" lan && show "$QR_HTML"
+  "$UV" run -q --with "qrcode[pil]" python cdt503/scripts/make_qr_page.py "$LAN/$Q" "$QR_HTML" lan && show "$QR_HTML"
 fi
 
 echo
