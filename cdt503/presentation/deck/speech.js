@@ -72,10 +72,10 @@ module.exports = [
       "This is running live on this laptop. It is the same 1.7B model on both sides: on the left without our adapter, on the right with it.",
       "[A clicks example 1, then Analyze] A customer says the fruit is great and cheaper than the supermarket. The base model reads it first, and it invents its own aspect name, flavour, which is not on our list, so a program cannot use it. Now the same model with our adapter: Taste and Price, both positive, highlighted in the text.",
       "[A clicks example 4] One hotel review, three signals: location good, room bad, service bad.",
-      "[A scrolls down to the prepared report] And this is what a shop owner would see: 150 hotel reviews the model has never seen. 53 percent positive, where the star ratings say 55, and the top complaints are rooms and service, each with the customers' own words.",
+      "[A switches to the second tab with the prepared report] And this is what a shop owner would see: 150 hotel reviews the model has never seen. 53 percent positive, where the star ratings say 55, and the top complaints are rooms and service, each with the customers' own words.",
       "You can try single reviews on your phone: just scan the QR code.",
     ],
-    tips: "上台前在页面最下面的报告区生成好 Hotel 报告（约 2 分钟），别刷新。出问题 15 秒内切备用视频，不要现场调试。详见 demo_script.md。",
+    tips: "上台前另开一个浏览器标签页生成好 Hotel 报告（约 2 分钟），别刷新；第一个标签页留在页面顶部，开头的动画留给观众看。出问题 15 秒内切备用视频，不要现场调试。详见 demo_script.md。",
   },
   {
     title: "What we learned", speaker: "A, then B", time: "0:40",
