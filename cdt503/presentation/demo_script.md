@@ -3,7 +3,7 @@
 A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英文就是 B 要说的话；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
 
 **上台前**：演示已启动、终端显示"预热完成"；浏览器放大到投影看得清；屏幕角落放好扫码二维码。
-**另开一个浏览器标签页**，切到 **Product report**，点上传框下面的 **Hotel · 150 reviews** 示例文件，再点 Generate report，等约 2 分钟出结果后**别刷新**——演示时直接切过去讲，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
+在演示页面**往下滚到最后的 Product report 区**，点上传框下面的 **Hotel · 150 reviews** 示例文件，再点 Generate report，等约 2 分钟出结果后**别刷新**，再滚回页面顶部——演示时往下滚就能看到，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
 
 ---
 
@@ -29,7 +29,7 @@ A 点第 4 个示例（酒店），**Analyze**。
 
 ### 0:55 — 商品报告：从一条评论到一整个商品（15 秒）
 
-A 切到提前生成好的 Hotel 报告标签页（见"上台前"）。
+A 往下滚到提前生成好的 Product report（见"上台前"）。
 
 预期（2026-11-18 离线实测，`cdt503/results/product_report/hotel/`）：150 reviews、53% positive / 47% negative、0 unusable；Most praised：Room & facilities 53×、Location 45×、Service 37×；Most criticised：Room & facilities 71×、Service 35×、Price 24×；下方一行写星级 55% 好评、整体判断一致 93%。
 
@@ -54,11 +54,11 @@ A 切到提前生成好的 Hotel 报告标签页（见"上台前"）。
 | 结果和预期不一样 | 照实讲出现的结果，不要假装 | "The model is deterministic, but here it shows … — that's exactly the kind of boundary case we discuss in our error analysis." |
 | 观众输入的评论模型答错了 | 承认并联系错误分析 | "Good example — it confuses build quality with performance, which is our most common error." |
 | 同学扫码打不开 | 不等，继续讲 | "The link may be blocked by the campus network — we'll share it after class." |
-| 报告标签页被刷新、结果没了 | 不要现场重新生成（要 2 分钟）；跳过这一段，口头说结论 | "On 150 hotel reviews it found 53% positive — the stars say 55% — and rooms and service are the top complaints." |
+| 页面被刷新、报告结果没了 | 不要现场重新生成（要 2 分钟）；跳过这一段，口头说结论 | "On 150 hotel reviews it found 53% positive — the stars say 55% — and rooms and service are the top complaints." |
 
 ## 彩排检查
 
 - [ ] A 点击和 B 讲话的节奏对上（B 说完一句，A 再点下一个）
 - [ ] 每次 Analyze 等待约 3–4 秒，讲稿里留出等待时间，不要冷场：可以边等边说"the same model answers twice…"
 - [ ] 整段控制在 1 分 20 秒内
-- [ ] 切到报告标签页那一下要快：提前把两个标签页挨着放，用 ⌘ + 数字键切换
+- [ ] 页面是一整页往下滚：开头点 "Try it live" 直接跳到演示区，报告区就在演示区下面，滚动要稳、别滚过头

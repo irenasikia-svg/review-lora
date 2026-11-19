@@ -367,7 +367,8 @@ def main():
         print(f"模型加载失败：{engine.error}", flush=True)  # 网页仍然打开，并在页面上提示
     demo = build_ui(engine, os.path.relpath(args.adapter, ROOT) if not args.mock else "mock")
     demo.queue(default_concurrency_limit=1, max_size=40)
-    theme = gr.themes.Soft(primary_hue="blue", font=FONT, font_mono=FONT_MONO)
+    theme = gr.themes.Soft(primary_hue="blue", font=FONT, font_mono=FONT_MONO).set(
+        body_background_fill="#FFFFFF", button_primary_background_fill="#3B5BDB")
     demo.launch(server_name=args.host, server_port=args.port, share=args.share, css=CSS, head=HEAD_JS,
                 theme=theme, show_error=True)
 

@@ -254,14 +254,17 @@ def section_head(title, sub, anchor):
 
 CSS += """
 /* ===== 风格 B（参考稿 cdt503/docs/mockups/style-b-product.html） ===== */
-body, .gradio-container, .main, .wrap { background: #fff !important; }
-.gradio-container { max-width: 1120px !important; color: #1D1D1F; }
+body, gradio-app, .gradio-container, .main, .wrap { background: #fff !important; }
+.gradio-container { max-width: 1120px !important; margin: 0 auto !important; color: #1D1D1F; }
+button.primary { background: #3B5BDB !important; border-color: #3B5BDB !important; color: #fff !important; }
+button.primary:hover { background: #2F4BC0 !important; }
 .rl-sub { font-size: 21px; color: #6E6E73; max-width: 640px; margin: 0 auto; line-height: 1.5; }
 .rl-hero { text-align: center; padding: 96px 0 72px; }
 .rl-eyebrow { font-size: 15px; font-weight: 600; color: #3B5BDB; }
 .rl-hero h1 { font-size: 76px; line-height: 1.04; letter-spacing: -.035em; margin: 14px 0 18px; font-weight: 700; }
 .rl-cta { margin-top: 32px; display: flex; gap: 14px; justify-content: center; }
-.rl-cta a { text-decoration: none !important; font-weight: 600; font-size: 16px; padding: 13px 26px; border-radius: 999px; }
+.rl-cta a { text-decoration: none !important; font-weight: 600; font-size: 16px; padding: 13px 26px; border-radius: 999px;
+  white-space: nowrap; }
 .rl-cta .pri { background: #3B5BDB; color: #fff !important; } .rl-cta .sec { color: #3B5BDB !important; }
 .rl-hero-card { margin: 56px auto 0; max-width: 760px; background: #fff; border-radius: 28px; padding: 32px 38px; text-align: left;
   box-shadow: 0 30px 60px -30px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.04); }

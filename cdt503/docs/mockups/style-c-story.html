@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style C · Story</title>
+<!-- 风格 C「逐步讲解」：左侧固定的步骤导航 + 进度线，右侧内容一步一步出现；顶部阅读进度条；流程图的箭头会"画"出来 -->
+<style>
+  :root { --ink:#1F2330; --muted:#6B7085; --line:#E8E9EE; --soft:#F7F8FA; --amber:#F2A93B; --green:#2E9E6A; --coral:#E0603F; --blue:#3B5BDB; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font:17px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--amber); width: 0; z-index: 9; }
+  .layout { max-width: 1120px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 220px 1fr; gap: 72px; }
+  nav { position: sticky; top: 0; height: 100vh; padding-top: 120px; }
+  nav .brand { font: 700 20px/1.2 Georgia,serif; margin-bottom: 44px; }
+  nav ol { list-style: none; padding: 0; margin: 0; position: relative; }
+  nav ol::before { content:""; position:absolute; left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+  nav li { position: relative; padding: 0 0 26px 30px; color: var(--muted); font-size: 15px; transition: color .3s; }
+  nav li::before { content:""; position:absolute; left: 1px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background:#fff; border: 2px solid var(--line); transition: all .3s; }
+  nav li.on { color: var(--ink); font-weight: 600; } nav li.on::before { background: var(--amber); border-color: var(--amber); }
+  nav li.done::before { border-color: var(--amber); }
+  main section { min-height: 78vh; padding: 120px 0 40px; }
+  .step { font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+  h1 { font: 700 60px/1.05 Georgia,serif; margin: 14px 0 20px; letter-spacing: -.01em; }
+  h2 { font: 700 38px/1.15 Georgia,serif; margin: 12px 0 22px; }
+  .lede { font-size: 21px; color: var(--muted); max-width: 620px; }
+  .quote { margin-top: 48px; background: var(--soft); border-radius: 20px; padding: 30px 34px; font-size: 25px; line-height: 1.9; }
+  .w { opacity: .25; transition: opacity .5s; } .in .w { opacity: 1; }
+  .in .w:nth-of-type(2) { transition-delay: .4s; } .in .w:nth-of-type(3) { transition-delay: .8s; }
+  .w.pos { color: var(--green); font-weight: 600; } .w.neg { color: var(--coral); font-weight: 600; }
+  .flow { margin-top: 40px; }
+  .flow svg { width: 100%; height: auto; }
+  .flow rect { rx: 14; } .flow text { font: 600 14px -apple-system,sans-serif; fill: var(--ink); } .flow .s { font-weight: 400; fill: var(--muted); font-size: 12.5px; }
+  .flow path { fill: none; stroke: #B9BDCC; stroke-width: 2; stroke-dasharray: 120; stroke-dashoffset: 120; transition: stroke-dashoffset 1s ease; marker-end: url(#a); }
+  .in .flow path { stroke-dashoffset: 0; } .in .flow path:nth-of-type(2) { transition-delay: .35s; } .in .flow path:nth-of-type(3) { transition-delay: .7s; }
+  .nums { display:grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 34px; }
+  .num { border: 1px solid var(--line); border-radius: 18px; padding: 26px; }
+  .num b { display:block; font: 700 44px/1 Georgia,serif; margin-bottom: 10px; } .num span { color: var(--muted); font-size: 15px; }
+  .meter { height: 6px; background: var(--line); border-radius: 3px; margin-top: 16px; overflow:hidden; }
+  .meter i { display:block; height:100%; width: 0; background: var(--blue); transition: width 1.1s ease; } .in .meter i { width: var(--w); }
+  .demo { margin-top: 30px; border: 1px solid var(--line); border-radius: 22px; padding: 26px; }
+  .input { border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 16px; font-size: 18px; }
+  .chips { display:flex; gap: 8px; margin: 14px 0 20px; flex-wrap: wrap; } .chips span { font-size: 13.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; }
+  .chips b { margin-left:auto; background: var(--ink); color:#fff; border-radius: 999px; padding: 7px 20px; font-size: 14px; }
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .res { border-radius: 16px; padding: 20px; background: var(--soft); } .res.lora { background:#fff; box-shadow: inset 0 0 0 2px var(--blue); }
+  .res h4 { margin: 0 0 10px; font-size: 14px; color: var(--muted); font-weight: 600; } .res p { margin: 10px 0 0; font-size: 18px; }
+  .t { font-size: 13px; font-weight: 600; border-radius: 8px; padding: 3px 10px; } .t.bad { background: rgba(214,130,0,.14); color:#a15c00; } .t.ok { background: rgba(46,158,106,.14); color: var(--green); }
+  mark { background: rgba(46,158,106,.18); color: inherit; border-radius: 5px; padding: 0 2px; }
+  .rows div { display:grid; grid-template-columns: 160px 1fr 44px; gap: 14px; align-items:center; margin: 14px 0; font-size: 15px; }
+  .rows .b { height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--green) var(--p), var(--coral) var(--p)); width: 0; transition: width 1s ease; }
+  .in .rows .b { width: var(--w); }
+  footer { padding: 40px 0 80px; color: var(--muted); font-size: 13px; }
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; } .reveal.in { opacity: 1; transform: none; }
+  .static .reveal { opacity:1; transform:none; } .static .w { opacity: 1; } .static .flow path { stroke-dashoffset: 0; } .static .meter i { width: var(--w); } .static .rows .b { width: var(--w); }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } nav { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="progress"></div>
+<div class="layout">
+  <nav>
+    <div class="brand">Beyond Star Ratings</div>
+    <ol>
+      <li data-for="s1" class="on">The problem</li><li data-for="s2">How it works</li><li data-for="s3">Results</li>
+      <li data-for="s4">Try it live</li><li data-for="s5">Product report</li>
+    </ol>
+  </nav>
+  <main>
+    <section id="s1" class="reveal">
+      <div class="step">Step 1 · The problem</div>
+      <h1>Stars say whether.<br>Reviews say why.</h1>
+      <p class="lede">One sentence can hide several signals. Our model pulls them out, so a shop can count them.</p>
+      <div class="quote">酒店<span class="w pos">离地铁站很近</span>，早餐种类挺多，但是<span class="w neg">房间隔音很差</span>，<span class="w neg">前台办入住等了半小时</span>。</div>
+    </section>
+    <section id="s2" class="reveal">
+      <div class="step">Step 2 · How it works</div>
+      <h2>A big teacher labels, a small student learns</h2>
+      <div class="flow">
+        <svg viewBox="0 0 820 130">
+          <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#B9BDCC" style="stroke:none"/></marker></defs>
+          <rect x="0" y="20" width="180" height="90" fill="#FFF4E0"/><text x="18" y="56">30B teacher</text><text class="s" x="18" y="80">labels 2,425 reviews</text>
+          <rect x="213" y="20" width="180" height="90" fill="#F7F8FA"/><text x="231" y="56">Quality filter</text><text class="s" x="231" y="80">2,228 kept</text>
+          <rect x="426" y="20" width="180" height="90" fill="#EEF1FC"/><text x="444" y="56">1.7B student + LoRA</text><text class="s" x="444" y="80">1% of weights · 94 min</text>
+          <rect x="639" y="20" width="180" height="90" fill="#EAF6F0"/><text x="657" y="56">Tested honestly</text><text class="s" x="657" y="80">test set + our labels</text>
+          <path d="M182,65 L210,65"/><path d="M395,65 L423,65"/><path d="M608,65 L636,65"/>
+        </svg>
+      </div>
+    </section>
+    <section id="s3" class="reveal">
+      <div class="step">Step 3 · Results</div>
+      <h2>Close to the teacher, at a fifth of the memory</h2>
+      <div class="nums">
+        <div class="num"><b>0.80</b><span>aspect-F1 (test)</span><div class="meter"><i style="--w:80%"></i></div></div>
+        <div class="num"><b>0.70</b><span>vs teacher 0.69 on human labels</span><div class="meter"><i style="--w:70%"></i></div></div>
+        <div class="num"><b>1/5</b><span>of the teacher's memory</span><div class="meter"><i style="--w:20%;background:var(--amber)"></i></div></div>
+      </div>
+    </section>
+    <section id="s4" class="reveal">
+      <div class="step">Step 4 · Try it live</div>
+      <h2>Same model, with and without our adapter</h2>
+      <div class="demo">
+        <div class="input">果子特别棒没有伤比超市便宜又好吃?直的够买</div>
+        <div class="chips"><span>Fruit</span><span>Hotel</span><span>Broken on arrival</span><span>Irony</span><b>Analyze</b></div>
+        <div class="two">
+          <div class="res"><h4>Base model</h4><span class="t bad">✗ Invalid output</span><p>果子特别棒没有伤比超市便宜又好吃?直的够买</p></div>
+          <div class="res lora"><h4>With LoRA</h4><span class="t ok">✓ Valid · positive</span><p>果子特别棒没有伤<mark>比超市便宜</mark><mark>又好吃</mark>?直的够买</p></div>
+        </div>
+      </div>
+    </section>
+    <section id="s5" class="reveal">
+      <div class="step">Step 5 · Product report</div>
+      <h2>150 hotel reviews → one summary</h2>
+      <p class="lede">53% positive (stars: 55%) · most criticised: rooms and service</p>
+      <div class="rows">
+        <div><span>Room &amp; facilities</span><i class="b" style="--p:43%;--w:100%"></i><span>124</span></div>
+        <div><span>Service</span><i class="b" style="--p:51%;--w:58%"></i><span>72</span></div>
+        <div><span>Location</span><i class="b" style="--p:83%;--w:44%"></i><span>54</span></div>
+        <div><span>Price</span><i class="b" style="--p:44%;--w:35%"></i><span>43</span></div>
+      </div>
+      <footer>Han Daiyuan · Li Mingtai · Lingnan University</footer>
+    </section>
+  </main>
+</div>
+<script>
+  if (location.search.includes("static")) document.documentElement.classList.add("static");
+  const items = [...document.querySelectorAll("nav li")];
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; e.target.classList.add("in");
+    const i = items.findIndex((li) => li.dataset.for === e.target.id);
+    items.forEach((li, j) => { li.classList.toggle("on", j === i); li.classList.toggle("done", j < i); }); }), { threshold: .35 });
+  document.querySelectorAll("main section").forEach((el) => io.observe(el));
+  addEventListener("scroll", () => { const h = document.documentElement; document.querySelector(".progress").style.width =
+    (100 * h.scrollTop / (h.scrollHeight - h.clientHeight)) + "%"; });
+</script>
+</body>
+</html>

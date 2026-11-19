@@ -308,11 +308,20 @@ async function main() {
   pres.addSection({ title: "Demo" });
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Demo" });
   s.addText(SPEECH[7].title, { placeholder: "title" });
-  const img = (file, x, y, w, ratio, alt) => {
-    card(s, x - 0.05, y - 0.05, w + 0.1, w / ratio + 0.1, { fill: "FFFFFF", line: "DADDE6", name: "frame" });
-    s.addImage({ path: path.join(SHOTS, file), x, y, w, h: w / ratio, altText: alt });
+  // 截图的宽高比从文件读，截图换了不用改代码；maxH 限制高度（超了就按比例缩小、水平居中）
+  const R = {};
+  for (const f of ["compare_done.png", "report_kpis.png", "report_chart.png"]) {
+    const m = await sharp(path.join(SHOTS, f)).metadata();
+    R[f] = m.width / m.height;
+  }
+  const img = (file, x, y, w, alt, maxH = 99) => {
+    let h = w / R[file];
+    if (h > maxH) { const w2 = maxH * R[file]; x += (w - w2) / 2; w = w2; h = maxH; }
+    card(s, x - 0.05, y - 0.05, w + 0.1, h + 0.1, { fill: "FFFFFF", line: "DADDE6", name: "frame" });
+    s.addImage({ path: path.join(SHOTS, file), x, y, w, h, altText: alt });
+    return y + h;
   };
-  img("compare_done.png", 0.55, 1.2, 5.5, 2480 / 766, "Base model output invalid; LoRA output valid with highlighted opinions");
+  img("compare_done.png", 0.55, 1.2, 5.5, "Base model output invalid; LoRA output valid with highlighted opinions", 1.65);
   text(s, [{ text: "1  ", options: { bold: true, color: HEX.accent1, fontFace: THEME.headFontFace, fontSize: 16 } },
     { text: "Same model: without the adapter it invents “flavour”; with it, Taste + and Price +.", options: { fontSize: 12 } }],
   0.55, 3.0, 5.5, 0.55, { color: C.text1 });
@@ -321,8 +330,8 @@ async function main() {
   { color: C.text1 });
   text(s, [{ text: "Scan the QR code to try it", options: { bold: true } }], 0.55, 4.45, 5.5, 0.35,
     { fontSize: 13, color: C.accent4 });
-  img("report_kpis.png", 6.4, 1.2, 3.1, 2420 / 940, "Product report: KPIs and top aspects");
-  img("report_chart.png", 6.4, 2.55, 3.1, 1204 / 920, "Product report: aspects mentioned, by sentiment");
+  const kpiBottom = img("report_kpis.png", 6.4, 1.2, 3.1, "Product report: KPIs and top aspects");
+  img("report_chart.png", 6.4, kpiBottom + 0.2, 3.1, "Product report: aspects mentioned, by sentiment", 4.95 - kpiBottom - 0.2);
   notes(s, 7);
 
   // ============ 9. 结论 ============

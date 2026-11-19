@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style A · Editorial</title>
+<!-- 风格 A「纸面·编辑风」：单栏窄版、大量留白、衬线标题、细分隔线、编号章节；动画是荧光笔划过和逐段淡入 -->
+<style>
+  :root { --ink:#1F2330; --muted:#6B7085; --line:#E6E7EC; --amber:#F2A93B; --green:#2E9E6A; --coral:#E0603F; --blue:#3B5BDB; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font:17px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 28px; }
+  section { padding: 120px 0; border-top: 1px solid var(--line); }
+  section.hero { border-top: 0; padding-top: 140px; }
+  .kicker { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--amber); font-weight: 600; }
+  h1 { font: 700 64px/1.05 Georgia,"Songti SC",serif; margin: 18px 0 18px; letter-spacing: -.01em; }
+  h2 { font: 700 36px/1.2 Georgia,"Songti SC",serif; margin: 10px 0 28px; }
+  .lede { font-size: 21px; color: var(--muted); max-width: 600px; }
+  .review { font: 400 30px/1.9 "Songti SC",Georgia,serif; margin: 56px 0 18px; }
+  mark { background: linear-gradient(transparent 58%, var(--c) 58%) no-repeat 0 0 / 0% 100%; color: inherit; padding: 0 2px;
+         transition: background-size .9s cubic-bezier(.6,.1,.2,1); }
+  mark.pos { --c: rgba(46,158,106,.28); } mark.neg { --c: rgba(224,96,63,.28); }
+  .in mark { background-size: 100% 100%; } .in mark:nth-of-type(2) { transition-delay: .5s; } .in mark:nth-of-type(3) { transition-delay: 1s; }
+  .tags { display:flex; gap:22px; font-size: 14px; color: var(--muted); }
+  .tags b { font-weight: 600; } .tags .p { color: var(--green); } .tags .n { color: var(--coral); }
+  .btns { margin-top: 56px; display:flex; gap: 28px; }
+  .btn { font-size: 15px; font-weight: 600; color: var(--ink); text-decoration: none; border-bottom: 2px solid var(--amber); padding-bottom: 3px; }
+  .steps { list-style: none; padding: 0; margin: 0; }
+  .steps li { display: grid; grid-template-columns: 70px 1fr; padding: 26px 0; border-bottom: 1px solid var(--line); }
+  .steps .n { font: 700 28px Georgia,serif; color: var(--amber); }
+  .steps h3 { margin: 0 0 4px; font-size: 19px; } .steps p { margin: 0; color: var(--muted); }
+  .nums { display:grid; grid-template-columns: repeat(3,1fr); gap: 40px; }
+  .num b { display:block; font: 700 54px/1 Georgia,serif; } .num span { color: var(--muted); font-size: 15px; }
+  .demo-in { border-bottom: 1.5px solid var(--ink); padding: 14px 0; font: 22px "Songti SC",serif; color: var(--muted); }
+  .chips { margin: 18px 0 40px; display:flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; color: var(--muted); }
+  .chips span { border-bottom: 1px dashed #c9ccd6; cursor: pointer; }
+  .run { display:inline-block; margin-top: 4px; background: var(--ink); color:#fff; font-weight:600; padding: 12px 26px; border-radius: 999px; font-size: 15px; }
+  .cols { display:grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 56px; }
+  .col h4 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+  .col .bad { color: #a15c00; font-weight: 600; font-size: 14px; } .col .ok { color: var(--green); font-weight: 600; font-size: 14px; }
+  .col p { font: 20px/1.8 "Songti SC",serif; margin: 10px 0; }
+  .col small { color: var(--muted); font-size: 14px; }
+  .bars div { display:grid; grid-template-columns: 150px 1fr 40px; align-items:center; gap: 14px; margin: 12px 0; font-size: 14px; }
+  .bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--green) var(--p), var(--coral) var(--p)); transform-origin: left; transform: scaleX(0); transition: transform 1s ease; }
+  .in .bar { transform: scaleX(1); }
+  footer { padding: 60px 0 80px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  .static .reveal { opacity: 1; transform: none; } .static mark { background-size: 100% 100%; } .static .bar { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal, mark, .bar { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero reveal">
+    <div class="kicker">CDT503 · Track B: NLP / PEFT</div>
+    <h1>Beyond Star Ratings</h1>
+    <p class="lede">A 1.7B model, fine-tuned on a laptop, reads a Chinese review and tells you <em>what</em> customers praise and complain about.</p>
+    <p class="review">酒店<mark class="pos">离地铁站很近</mark>，早餐种类挺多，但是<mark class="neg">房间隔音很差</mark>，<mark class="neg">前台办入住等了半小时</mark>。</p>
+    <div class="tags"><span><b class="p">Location +</b></span><span><b class="n">Room &amp; facilities −</b></span><span><b class="n">Service −</b></span></div>
+    <div class="btns"><a class="btn" href="#try">Try it live ↓</a><a class="btn" href="#how">How it works</a></div>
+  </section>
+
+  <section id="how" class="reveal">
+    <div class="kicker">01 — How it works</div>
+    <h2>A big teacher, a small student</h2>
+    <ol class="steps">
+      <li><span class="n">1</span><div><h3>A 30B teacher labels 2,425 real reviews</h3><p>following a written guideline with 16 fixed aspects</p></div></li>
+      <li><span class="n">2</span><div><h3>LoRA trains 1% of a 1.7B student</h3><p>17M weights, a 70 MB file, 94 minutes on one M5 laptop</p></div></li>
+      <li><span class="n">3</span><div><h3>Checked honestly</h3><p>tuned on validation only, tested once, and compared with our own labels</p></div></li>
+    </ol>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker">02 — Results</div>
+    <h2>Close to the teacher, at a fifth of the memory</h2>
+    <div class="nums">
+      <div class="num"><b>0.80</b><span>aspect-F1 on the test set<br>(base model: 0.51)</span></div>
+      <div class="num"><b>≈</b><span>the 30B teacher, judged<br>against human labels</span></div>
+      <div class="num"><b>1/5</b><span>of the teacher's<br>weight memory</span></div>
+    </div>
+  </section>
+
+  <section id="try" class="reveal">
+    <div class="kicker">03 — Try it live</div>
+    <h2>Same model, with and without our adapter</h2>
+    <div class="demo-in">果子特别棒没有伤比超市便宜又好吃?直的够买</div>
+    <div class="chips"><span>Fruit</span><span>Phone update</span><span>Hotel</span><span>Broken on arrival</span><span>Irony</span></div>
+    <span class="run">Analyze</span>
+    <div class="cols">
+      <div class="col"><h4>Base model</h4><span class="bad">✗ Invalid — “味道” is not an allowed aspect</span><p>果子特别棒没有伤比超市便宜又好吃?直的够买</p></div>
+      <div class="col"><h4>With LoRA</h4><span class="ok">✓ Valid · positive</span><p>果子特别棒没有伤<mark class="pos">比超市便宜</mark><mark class="pos">又好吃</mark>?直的够买</p><small>Price + · Taste +</small></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="kicker">04 — Product report</div>
+    <h2>150 hotel reviews, one summary</h2>
+    <div class="nums" style="margin-bottom:40px">
+      <div class="num"><b style="color:var(--green)">53%</b><span>positive (stars: 55%)</span></div>
+      <div class="num"><b>93%</b><span>agree with the stars</span></div>
+      <div class="num"><b>2 min</b><span>for 150 reviews</span></div>
+    </div>
+    <div class="bars">
+      <div><span>Room &amp; facilities</span><div class="bar" style="--p:43%"></div><span>124</span></div>
+      <div><span>Service</span><div class="bar" style="--p:51%;width:58%"></div><span>72</span></div>
+      <div><span>Location</span><div class="bar" style="--p:83%;width:44%"></div><span>54</span></div>
+      <div><span>Price</span><div class="bar" style="--p:44%;width:35%"></div><span>43</span></div>
+    </div>
+  </section>
+  <footer>Han Daiyuan · Li Mingtai · Lingnan University · runs locally on an Apple M5 with MLX</footer>
+</div>
+<script>
+  if (location.search.includes("static")) document.documentElement.classList.add("static");
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target.classList.add("in")), { threshold: .2 });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

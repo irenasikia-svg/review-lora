@@ -121,9 +121,9 @@
 中文：做过这个对照（少样本提示）：原始模型给 4 个示例，验证集 F1 只从 0.538 到 0.594，格式错误率还是 8.5%；LoRA 是 0.802、零错误，而且推理成本一样。
 
 **22. Could a merchant point this at a product page and get a report?**
-> The second demo tab does the report part: paste reviews or upload a CSV, and it returns the positive share, the most praised and most criticised aspects with customers' own words, a chart and a CSV. On 150 hotel reviews it had never seen, it found 53% positive against 55% by star rating, and agreed with the rating on 93% of individual reviews; 150 reviews take about two minutes. We deliberately don't scrape shop pages: they need logins and anti-bot checks, and their terms forbid it. The natural input is the merchant's own exported reviews.
+> The last section of the demo page does the report part: paste reviews or upload a CSV, and it returns the positive share, the most praised and most criticised aspects with customers' own words, a chart and a CSV. On 150 hotel reviews it had never seen, it found 53% positive against 55% by star rating, and agreed with the rating on 93% of individual reviews; 150 reviews take about two minutes. We deliberately don't scrape shop pages: they need logins and anti-bot checks, and their terms forbid it. The natural input is the merchant's own exported reviews.
 
-中文：第二个标签页就是做报告的：粘贴或上传评论，给出好评率、最受好评/最常被抱怨的方面和原文、图表、CSV。酒店 150 条没见过的评论：好评 53%（星级 55%），逐条一致 93%，约 2 分钟。不做网页抓取：要登录、有反爬虫、平台条款禁止；正常用法是商家导出自己的评论。三个样例的一致率是 93–96%。
+中文：演示页最下面的报告区就是做报告的：粘贴或上传评论，给出好评率、最受好评/最常被抱怨的方面和原文、图表、CSV。酒店 150 条没见过的评论：好评 53%（星级 55%），逐条一致 93%，约 2 分钟。不做网页抓取：要登录、有反爬虫、平台条款禁止；正常用法是商家导出自己的评论。三个样例的一致率是 93–96%。
 
 ---
 

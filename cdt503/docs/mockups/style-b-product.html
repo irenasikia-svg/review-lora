@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style B · Product</title>
+<!-- 风格 B「产品发布风」：超大粗体无衬线标题、浅灰色分区色带、大圆角白卡片、数字滚动增长、演示放在"窗口"里；动画是卡片依次上浮、数字计数 -->
+<style>
+  :root { --ink:#1D1D1F; --muted:#6E6E73; --band:#F5F5F7; --amber:#F2A93B; --green:#2E9E6A; --coral:#E0603F; --blue:#3B5BDB; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#fff; color:var(--ink); font:17px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+  section { padding: 110px 0; } .band { background: var(--band); }
+  .center { text-align: center; }
+  .eyebrow { font-size: 15px; font-weight: 600; color: var(--blue); }
+  h1 { font-size: 76px; line-height: 1.04; letter-spacing: -.035em; margin: 14px 0 18px; font-weight: 700; }
+  h2 { font-size: 44px; line-height: 1.1; letter-spacing: -.025em; margin: 8px 0 14px; font-weight: 700; }
+  .sub { font-size: 22px; color: var(--muted); max-width: 640px; margin: 0 auto; }
+  .cta { margin-top: 34px; display:flex; gap: 14px; justify-content: center; }
+  .cta a { text-decoration:none; font-weight: 600; font-size: 16px; padding: 13px 26px; border-radius: 999px; }
+  .cta .pri { background: var(--blue); color: #fff; } .cta .sec { color: var(--blue); }
+  .hero-card { margin: 64px auto 0; max-width: 760px; background: #fff; border-radius: 28px; padding: 36px 40px;
+               box-shadow: 0 30px 60px -30px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.04); text-align: left; }
+  .hero-card p { font-size: 26px; margin: 0 0 22px; }
+  .hl { border-radius: 6px; padding: 1px 3px; transition: background-color .6s ease; }
+  .in .hl.pos { background: rgba(46,158,106,.18); } .in .hl.neg { background: rgba(224,96,63,.18); }
+  .in .hl:nth-of-type(2) { transition-delay: .35s; } .in .hl:nth-of-type(3) { transition-delay: .7s; }
+  .pill { display:inline-block; font-size: 14px; font-weight: 600; border-radius: 999px; padding: 5px 14px; margin-right: 8px; }
+  .pill.pos { background: rgba(46,158,106,.12); color: var(--green); } .pill.neg { background: rgba(224,96,63,.12); color: var(--coral); }
+  .grid3 { display:grid; grid-template-columns: repeat(3,1fr); gap: 22px; margin-top: 48px; }
+  .card { background:#fff; border-radius: 24px; padding: 32px; }
+  .band .card { box-shadow: 0 1px 0 rgba(0,0,0,.03); }
+  .card .ic { width: 46px; height: 46px; border-radius: 14px; display:grid; place-items:center; font-size: 22px; margin-bottom: 22px; }
+  .card h3 { font-size: 21px; margin: 0 0 6px; letter-spacing: -.01em; } .card p { margin:0; color: var(--muted); font-size: 16px; }
+  .big { font-size: 64px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+  .window { margin-top: 48px; background:#fff; border-radius: 22px; box-shadow: 0 30px 70px -35px rgba(0,0,0,.3), 0 0 0 1px rgba(0,0,0,.05); overflow: hidden; }
+  .bar3 { display:flex; gap: 8px; padding: 14px 18px; border-bottom: 1px solid #eee; }
+  .bar3 i { width: 12px; height: 12px; border-radius: 50%; background: #e3e3e8; display:block; }
+  .wbody { padding: 30px; }
+  .input { background: var(--band); border-radius: 14px; padding: 16px 18px; font-size: 18px; }
+  .row { display:flex; gap: 10px; margin: 14px 0 26px; flex-wrap: wrap; } .row span { background: var(--band); border-radius: 999px; padding: 6px 14px; font-size: 14px; color: var(--muted); }
+  .row b { margin-left: auto; background: var(--blue); color:#fff; border-radius: 999px; padding: 8px 22px; font-size: 15px; }
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .res { border-radius: 18px; padding: 22px; background: var(--band); }
+  .res.lora { background: #fff; box-shadow: 0 0 0 2px var(--blue); }
+  .res h4 { margin: 0 0 12px; font-size: 15px; } .res p { font-size: 18px; margin: 12px 0; }
+  .tag { font-size: 13px; font-weight: 600; border-radius: 8px; padding: 3px 10px; }
+  .tag.bad { background: rgba(214,130,0,.14); color:#a15c00; } .tag.ok { background: rgba(46,158,106,.14); color: var(--green); }
+  .kpis { display:grid; grid-template-columns: repeat(3,1fr); gap: 22px; margin-top: 48px; }
+  .stack { height: 10px; border-radius: 5px; overflow:hidden; display:flex; margin-top: 18px; }
+  .stack i { display:block; height: 100%; }
+  footer { padding: 50px 0 70px; text-align:center; color: var(--muted); font-size: 13px; }
+  .reveal { opacity: 0; transform: translateY(30px) scale(.985); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  .grid3 .reveal:nth-child(2), .kpis .reveal:nth-child(2) { transition-delay: .12s; } .grid3 .reveal:nth-child(3), .kpis .reveal:nth-child(3) { transition-delay: .24s; }
+  .static .reveal { opacity: 1; transform: none; } .static .hl.pos { background: rgba(46,158,106,.18); } .static .hl.neg { background: rgba(224,96,63,.18); }
+  @media (prefers-reduced-motion: reduce) { .reveal, .hl { transition: none !important; } }
+</style>
+</head>
+<body>
+<section class="center reveal">
+  <div class="wrap">
+    <div class="eyebrow">CDT503 · Track B: NLP / PEFT</div>
+    <h1>Beyond Star Ratings.</h1>
+    <p class="sub">Stars say whether customers are happy. Our 1.7B model tells you why.</p>
+    <div class="cta"><a class="pri" href="#try">Try it live</a><a class="sec" href="#how">How it works ›</a></div>
+    <div class="hero-card">
+      <p>酒店<span class="hl pos">离地铁站很近</span>，早餐种类挺多，但是<span class="hl neg">房间隔音很差</span>，<span class="hl neg">前台办入住等了半小时</span>。</p>
+      <span class="pill pos">Location +</span><span class="pill neg">Room &amp; facilities −</span><span class="pill neg">Service −</span>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="band">
+  <div class="wrap center">
+    <h2 class="reveal">How it works.</h2>
+    <p class="sub reveal">A big model teaches, a small model learns, on one laptop.</p>
+    <div class="grid3" style="text-align:left">
+      <div class="card reveal"><div class="ic" style="background:rgba(242,169,59,.16)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C98516" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div><h3>Teacher labels</h3><p>Qwen3-30B labels 2,425 real reviews with 16 fixed aspects.</p></div>
+      <div class="card reveal"><div class="ic" style="background:rgba(59,91,219,.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B5BDB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg></div><h3>Student learns</h3><p>LoRA trains 1% of Qwen3-1.7B: a 70 MB file, 94 minutes.</p></div>
+      <div class="card reveal"><div class="ic" style="background:rgba(46,158,106,.14)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E9E6A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></div><h3>Honestly tested</h3><p>Tuned on validation only, then checked against our own labels.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap center">
+    <h2 class="reveal">Small model. Teacher-level results.</h2>
+    <div class="kpis">
+      <div class="card reveal" style="background:var(--band)"><div class="big" data-count="0.80">0.80</div><p>aspect-F1 on the test set<br>base model: 0.51</p></div>
+      <div class="card reveal" style="background:var(--band)"><div class="big">≈</div><p>the 30B teacher,<br>judged by humans</p></div>
+      <div class="card reveal" style="background:var(--band)"><div class="big" data-count="5" data-suffix="×">5×</div><p>less memory<br>than the teacher</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="try" class="band">
+  <div class="wrap">
+    <div class="center"><h2 class="reveal">Try it live.</h2><p class="sub reveal">The same model answers twice: without and with our adapter.</p></div>
+    <div class="window reveal">
+      <div class="bar3"><i></i><i></i><i></i></div>
+      <div class="wbody">
+        <div class="input">果子特别棒没有伤比超市便宜又好吃?直的够买</div>
+        <div class="row"><span>Fruit</span><span>Hotel</span><span>Broken on arrival</span><span>Irony</span><b>Analyze</b></div>
+        <div class="two">
+          <div class="res"><h4>Base model</h4><span class="tag bad">✗ Invalid output</span><p>果子特别棒没有伤比超市便宜又好吃?直的够买</p><small style="color:var(--muted)">“味道” is not an allowed aspect</small></div>
+          <div class="res lora"><h4>With LoRA</h4><span class="tag ok">✓ Valid · positive</span><p>果子特别棒没有伤<span class="hl pos" style="background:rgba(46,158,106,.18)">比超市便宜</span><span class="hl pos" style="background:rgba(46,158,106,.18)">又好吃</span>?直的够买</p><span class="pill pos">Price +</span><span class="pill pos">Taste +</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap center">
+    <h2 class="reveal">A whole product, in one report.</h2>
+    <p class="sub reveal">150 hotel reviews the model has never seen.</p>
+    <div class="kpis" style="text-align:left">
+      <div class="card reveal" style="background:var(--band)"><div class="big" style="color:var(--green)">53%</div><p>positive · stars say 55%</p><div class="stack"><i style="width:53%;background:var(--green)"></i><i style="width:47%;background:var(--coral)"></i></div></div>
+      <div class="card reveal" style="background:var(--band)"><div class="big" style="font-size:30px;line-height:1.3">Room &amp;<br>facilities</div><p>most criticised · 71 times</p></div>
+      <div class="card reveal" style="background:var(--band)"><div class="big">2 min</div><p>for 150 reviews</p></div>
+    </div>
+  </div>
+</section>
+<footer>Han Daiyuan · Li Mingtai · Lingnan University · runs locally on an Apple M5 with MLX</footer>
+<script>
+  const isStatic = location.search.includes("static");
+  if (isStatic) document.documentElement.classList.add("static");
+  const count = (el) => { const to = parseFloat(el.dataset.count), suf = el.dataset.suffix || "", dec = String(el.dataset.count).split(".")[1]?.length || 0;
+    const t0 = performance.now(); const tick = (t) => { const k = Math.min(1, (t - t0) / 900); el.textContent = (to * (1 - Math.pow(1 - k, 3))).toFixed(dec) + suf; if (k < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); };
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; e.target.classList.add("in");
+    e.target.querySelectorAll("[data-count]").forEach(count); e.target.matches("[data-count]") && count(e.target); io.unobserve(e.target); }), { threshold: .2 });
+  if (!isStatic) document.querySelectorAll(".reveal, section").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>

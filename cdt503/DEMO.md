@@ -101,7 +101,7 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 
 ## 商品报告页（Product report）
 
-第二个标签页：粘贴一批评论（一行一条）、上传 CSV/TXT，或点上传框下面的示例文件（Hotel / Tablet / Fruit，各 150 条没用过的评论；点一下就装进上传框，点文件名旁的 ↓ 能下载下来看格式），
+页面最下面的 Product report 区：粘贴一批评论（一行一条）、上传 CSV/TXT，或点上传框下面的示例文件（Hotel / Tablet / Fruit，各 150 条没用过的评论；点一下就装进上传框，点文件名旁的 ↓ 能下载下来看格式），
 点 Generate report，模型逐条分析后给出：好评/差评比例、最受好评和最常被抱怨的方面、每个方面的好差评次数和原文观点、
 条形图，以及逐条结果 CSV 下载。
 
@@ -116,7 +116,7 @@ uv run --with qrcode python -c "import qrcode,sys; q=qrcode.QRCode(); q.add_data
 
   原数据集每类都是人为凑成好差评各半，所以好评率本身没意义，看的是和星级的一致程度
 - **不能和训练同时开**：报告是批量生成，和训练叠加会 GPU 内存不足，两边一起崩（11-17 实际发生过）
-- 现场建议只由讲台电脑演示这一页，内置示例文件最稳：**上台前在另一个标签页点 Hotel 示例文件、生成好报告**，演示时切过去讲，不现场等 2 分钟（见 `presentation/demo_script.md`）
+- 现场建议只由讲台电脑演示这一段，内置示例文件最稳：**上台前在页面最下面的报告区点 Hotel 示例文件、生成好报告**，演示时往下滚过去讲，不现场等 2 分钟（见 `presentation/demo_script.md`）
 
 ## 录制备用视频
 
