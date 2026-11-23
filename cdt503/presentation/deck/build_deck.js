@@ -100,7 +100,7 @@ async function main() {
     }
     text(s, line, x, y, line.length * cw + 0.2, bh, { fontSize: fs, color: C.text1, fontFace: CJK, valign: "middle" });
   };
-  const notes = (s, i) => s.addNotes(`[${SPEECH[i].speaker} · ${SPEECH[i].time}]\n\n` + SPEECH[i].say.join("\n\n") +
+  const notes = (s, i) => s.addNotes(`[第 ${i + 1} 页 · ${SPEECH[i].speaker} · ${SPEECH[i].time}]\n\n` + SPEECH[i].say.join("\n\n") +
     "\n\n—— " + SPEECH[i].tips);
   const W0 = (o = {}) => [{ text: "W", options: o }, { text: "0", options: { ...o, subscript: true } }];
 

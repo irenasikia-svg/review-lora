@@ -1,4 +1,4 @@
-# 现场演示脚本（8 分钟版第 8 页，1 分 20 秒）
+# 现场演示脚本（PPT 第 8 页，1 分 15 秒）
 
 A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英文就是 B 要说的话；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
 
@@ -7,37 +7,36 @@ A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英
 
 ---
 
+讲的话和 `speech_script.md` 第 8 页一致（语速放慢后只演示例子 1 和商品报告，例子 4 改为备用）。
+
 ### 0:00 — 开场（10 秒）
 
-> "This is the live prototype, running on this laptop right now. Same 1.7B model on both sides — left without our adapter, right with it."
+A 切到浏览器第 1 个标签页（停在页面顶部，开头的动画会当场播放），点 **Try it live** 跳到演示区。
 
-### 0:10 — 例子 1：原始模型不守规则（25 秒）
+> "This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it."
+
+### 0:10 — 例子 1：原始模型不守规则（35 秒）
 
 A 点第 1 个示例 *果子特别棒没有伤比超市便宜又好吃*，再点 **Analyze**。
 
 预期：先是左边扫描、右边等待；约 2 秒后左边出 **✗ Invalid output — Aspect "味道" is not in the allowed list**，右边开始扫描；再约 2 秒右边出 ✓ Taste +、Price +，原文里的观点依次亮起。B 可以在右边扫描时说 "…and now the same model with our adapter"。
 
-> "A customer says the fruit is great and cheaper than the supermarket. The base model invents its own aspect name, 'flavour', which is not in our list — so a program can't count it. The fine-tuned model uses the allowed names, Taste and Price, and highlights the exact words."
+> "A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive."
 
-### 0:35 — 例子 4：一句话拆出多个方面（20 秒）
-
-A 点第 4 个示例（酒店），**Analyze**。
-
-预期：左边 ✗ sentiment "中性"（neutral 不在规则里）；右边 Location +、Room & facilities −、Service −。
-
-> "One hotel review, three signals: location good, room bad, service bad. The base model answers 'neutral', which our schema doesn't allow. The adapter splits it correctly."
-
-### 0:55 — 商品报告：从一条评论到一整个商品（15 秒）
+### 0:45 — 商品报告：从一条评论到一整个商品（20 秒）
 
 A 切到第 2 个标签页（提前生成好的报告，见"上台前"）。
 
 预期（2026-11-18 离线实测，`cdt503/results/product_report/hotel/`）：150 reviews、53% positive / 47% negative、0 unusable；Most praised：Room & facilities 53×、Location 45×、Service 37×；Most criticised：Room & facilities 71×、Service 35×、Price 24×；下方一行写星级 55% 好评、整体判断一致 93%。
 
-> "And this is what a merchant actually wants. 150 hotel reviews the model has never seen: 53% positive — the star ratings say 55% — and the complaints are specific: rooms first, then service, each with the customers' own words."
+> "And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service."
 
-### 1:10 — 请观众试（10 秒）
+### 1:05 — 请观众试（10 秒）
 
-> "You can try single reviews on your phone — scan the QR code. If many of you try at once there's a short queue: about four seconds each."
+> "You can try it yourself. Just scan the QR code."
+
+**备用（时间够或被问到时）**：例子 4（酒店）→ 左边 ✗ sentiment "中性"（neutral 不在规则里），右边 Location +、Room & facilities −、Service −。
+> "One hotel review, three signals: location good, room bad, service bad. The base model answers neutral, which our schema does not allow."
 
 **备用（时间够或被问到时）**：例子 6 *还没用，用了再来评价* → 右边 "No specific aspect mentioned."
 > "And when a review says nothing concrete, it doesn't make anything up."
