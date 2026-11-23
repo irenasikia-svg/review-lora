@@ -10,7 +10,8 @@ const React = require("react");
 const ReactDOMServer = require("react-dom/server");
 const sharp = require("sharp");
 const Lu = require("react-icons/lu");
-const SPEECH = require("./speech.js");
+// 讲稿版本：默认 8 分钟版；SPEECH=speech_6min.js OUT=…_6min.pptx 生成 6 分钟版（幻灯片一样，只有备注不同）
+const SPEECH = require("./" + (process.env.SPEECH || "speech.js"));
 
 // pptx skill 自带的主题工具：pptxgenjs 写不进主题颜色，要写完文件后再补上
 const SKILL = process.env.PPTX_SKILL_DIR ||
@@ -19,7 +20,7 @@ const { applyTheme } = require(path.join(SKILL, "scripts/apply_theme.js"));
 
 const ROOT = path.resolve(__dirname, "../../..");
 const SHOTS = path.join(ROOT, "cdt503/figures/demo_screens");
-const OUT = path.join(ROOT, "cdt503/presentation/CDT503_BeyondStarRatings_slides.pptx");
+const OUT = path.join(ROOT, "cdt503/presentation", process.env.OUT || "CDT503_BeyondStarRatings_slides.pptx");
 const CHART_SPECS = path.join(__dirname, "charts.json");
 
 // 配色：白底；琥珀色（星级）是主强调色；绿/红只表示好评/差评，蓝只表示"我们的 LoRA 模型"
