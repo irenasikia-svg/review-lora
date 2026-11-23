@@ -28,17 +28,18 @@ Lingnan University, Hong Kong}}
 \begin{abstract}
 Online shops receive thousands of free-text reviews, but merchants need structured signals: \emph{which} aspect of a
 product is praised or criticised. We build a working prototype that turns a Chinese e-commerce review into a JSON
-record of its overall sentiment and up to 16 aspect--sentiment pairs. Instead of paying human annotators, a 30B-parameter
-teacher (Qwen3-30B-A3B) labels 2{,}425 real reviews under a written annotation guideline; labels that are malformed or
+record of its overall sentiment and up to 16 aspect-sentiment pairs. Instead of paying human annotators, a 30B-parameter
+teacher (Qwen3-30B-A3B) labels 2{,}425 real reviews under a written annotation guideline. Labels that are malformed or
 contradict the review's human star rating are filtered out, and a 1.7B student (Qwen3-1.7B) is fine-tuned with LoRA on
 an Apple-silicon laptop using MLX. A one-factor-at-a-time sweep over rank, learning rate and adapted layers (10 runs,
 selected on validation data only) raises test aspect-F1 from 0.734 to 0.807 ($+0.073$, 95\% bootstrap CI
-$[+0.038, +0.110]$; 0.790--0.807 across three training seeds), versus 0.513 for the untuned base model; showing the base model the teacher's four worked
-examples instead helps far less (validation F1 0.538 $\rightarrow$ 0.594, vs.\ 0.802 for LoRA). On 100 never-used reviews
+$[+0.038, +0.110]$), and three training seeds of the tuned model score 0.790--0.807. The untuned base model scores 0.513,
+and showing it the teacher's four worked examples helps far less than fine-tuning (validation F1 0.538 $\rightarrow$
+0.594, vs.\ 0.802 for LoRA). On 100 never-used reviews
 labelled by two group members, the student is statistically indistinguishable from the teacher (0.701 vs.\ 0.689
 aspect-F1) with 18$\times$ fewer total parameters (under 2$\times$ fewer active ones), about 5$\times$ less weight memory
-and 1.8$\times$ the speed. A Gradio demo shows the base and fine-tuned outputs side by side, survived a 12-user
-concurrency test, and turns a batch of reviews into a per-aspect product report.
+and 1.8$\times$ the speed. A Gradio demo shows the base and fine-tuned outputs side by side, handles 12 users at once,
+and turns a batch of reviews into a per-aspect product report.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -51,19 +52,19 @@ aspect-based sentiment analysis, LoRA, knowledge distillation, parameter-efficie
 
 Star ratings tell a merchant \emph{whether} customers are happy, but not \emph{why}. A review such as
 ``\textit{the hotel is close to the metro, but the room has poor sound insulation and check-in took half an hour}''
-contains three actionable signals (location $+$, room $-$, service $-$) hidden in one sentence. Extracting such
-aspect--sentiment pairs is the classic aspect-based sentiment analysis (ABSA) task~\cite{pontiki2014semeval}.
+contains three actionable signals (location $+$, room $-$, service $-$) in one sentence. Extracting such
+aspect-sentiment pairs is the classic aspect-based sentiment analysis (ABSA) task~\cite{pontiki2014semeval}.
 Our goal is a small model that outputs this information as \emph{machine-readable JSON}, so that a downstream
 program can aggregate it (e.g.\ ``40\% of complaints this month are about logistics'').
 
-\textbf{Why not just prompt a large model?} A 30B model follows the format well but is slow and memory-hungry; a 1.7B
-model is fast but, when prompted, frequently invents aspect names outside the allowed list or uses a ``neutral'' label the
-schema does not permit. Our question is whether parameter-efficient fine-tuning can give the small model the
+\textbf{Why not just prompt a large model?} A 30B model follows the format well but is slow and memory-hungry. A 1.7B
+model is fast, but when prompted it often invents aspect names outside the allowed list or uses a ``neutral'' label that
+the schema does not permit. Our question is whether parameter-efficient fine-tuning can give the small model the
 large model's reliability at the small model's cost.
 
 \textbf{Data.} We use \texttt{online\_shopping\_10\_cats}~\cite{chinesenlpcorpus}, 62{,}774 real Chinese reviews from 10
-product categories, each with a binary human sentiment label (Table~\ref{tab:data}). The data are genuinely ``dirty'':
-missing texts, byte-order marks, duplicates, copy-pasted promotional templates, and long rants. After removing empty and
+product categories, each with a binary human sentiment label (Table~\ref{tab:data}). The data are noisy, with
+missing texts, byte-order marks, duplicates, copy-pasted promotional templates and long rants. After removing empty and
 duplicate texts and keeping reviews of 12--160 characters, 54{,}472 remain. We draw a stratified sample of 2{,}425
 (balanced by category and sentiment) for distillation.
 
@@ -103,8 +104,8 @@ Fig.~\ref{fig:pipeline} shows the full system. Every stage runs on one laptop (A
 \resizebox{\textwidth}{!}{\input{fig_pipeline}}
 \caption{System architecture. Top: the teacher labels a stratified sample under a written guideline, a quality filter
 removes unreliable labels, and the student is fine-tuned with LoRA. Bottom: a hyper-parameter sweep selects the final
-adapter on validation loss; the adapter is then evaluated once on the test set, against fresh human labels, and served in
-a Gradio demo that keeps a single model in memory and switches the adapter on and off.}
+adapter on validation loss. The adapter is then evaluated once on the test set and against fresh human labels, and it is
+served in a Gradio demo that keeps a single model in memory and switches the adapter on and off.}
 \label{fig:pipeline}
 \end{figure*}
 
@@ -112,21 +113,21 @@ a Gradio demo that keeps a single model in memory and switches the adapter on an
 Following the idea of transferring a large model's behaviour into a small one~\cite{hinton2015distilling,hsieh2023distilling}
 and the finding that LLMs can be cost-effective annotators~\cite{gilardi2023chatgpt}, we use
 Qwen3-30B-A3B~\cite{qwen3} (4-bit, mixture-of-experts: 30.5B parameters, 3.3B active per token) as the teacher. Its prompt contains the
-16 aspect definitions, nine disambiguation rules (e.g.\ ``lag or short battery life $\rightarrow$ Performance;
-crashes or dead on arrival $\rightarrow$ Defect'') and four worked examples. Labelling the 2{,}425 reviews took
+16 aspect definitions, nine disambiguation rules (e.g.\ ``lag or short battery life $\rightarrow$ Performance'' and
+``crashes or dead on arrival $\rightarrow$ Defect'') and four worked examples. Labelling the 2{,}425 reviews took
 $\approx$50\,min.
 
 Teacher labels are not ground truth, so we keep a label only if (i) it parses as valid JSON with allowed values, and
-(ii) its overall sentiment agrees with the dataset's \emph{human} sentiment label. Rule (ii) removed 182 reviews; many
-were genuinely mixed (``good water heater, but the installation fee is outrageous'') or mislabelled in the original data.
+(ii) its overall sentiment agrees with the dataset's \emph{human} sentiment label. Rule (ii) removed 182 reviews. Many
+of them were mixed (``good water heater, but the installation fee is outrageous'') or mislabelled in the original data.
 
 \subsection{Iterating on the label schema}
 Our first schema (12 aspects) produced systematic confusion: a single ``Quality'' aspect mixed build quality, defects
 and authenticity, and the teacher kept inventing natural names such as ``texture'' or ``location''. We revised it to 16
 aspects whose names are the words people actually use, plus the disambiguation rules above. To check that the new
-schema is genuinely clearer---not just different---we had a \emph{second} model (Qwen3-14B) label the same 285 reviews
-independently and measured inter-annotator agreement with the teacher: aspect-F1 rose from 0.768 to 0.806 even though
-the number of categories grew from 12 to 16, and teacher format errors fell from 40 to 15 per 2{,}425.
+schema is clearer, a \emph{second} model (Qwen3-14B) labelled the same 285 reviews independently, and we measured its
+agreement with the teacher. Aspect-F1 rose from 0.768 to 0.806 even though the number of categories grew from 12 to 16,
+and teacher format errors fell from 40 to 15 per 2{,}425.
 
 \subsection{LoRA fine-tuning}
 LoRA~\cite{hu2022lora} freezes each pretrained weight matrix $W_0\in\mathbb{R}^{d\times k}$ and learns a low-rank update:
@@ -134,8 +135,8 @@ LoRA~\cite{hu2022lora} freezes each pretrained weight matrix $W_0\in\mathbb{R}^{
 h = W_0 x + s\,B A x,
 \label{eq:lora}
 \end{equation}
-with $B\in\mathbb{R}^{d\times r}$, $A\in\mathbb{R}^{r\times k}$ and rank $r\ll\min(d,k)$. $B$ is initialised to zero so training starts from the base model. In the original formulation $s=\alpha/r$; in
-MLX-LM~\cite{mlx2023,mlxlm} the scale $s$ is set directly (default 20). With $r=16$ on the attention and MLP projections
+with $B\in\mathbb{R}^{d\times r}$, $A\in\mathbb{R}^{r\times k}$ and rank $r\ll\min(d,k)$. $B$ is initialised to zero so training starts from the base model. The original formulation uses $s=\alpha/r$,
+while MLX-LM~\cite{mlx2023,mlxlm} sets the scale $s$ directly (default 20). With $r=16$ on the attention and MLP projections
 of all 28 layers, only 17.4M of 1{,}720M parameters (1.01\%) are trained and the adapter is 70\,MB.
 
 The prompt (instructions, aspect list and rules, $\approx$780 tokens) is identical for every example, so we compute the
@@ -145,14 +146,15 @@ cross-entropy loss only on the answer tokens $y$ (``mask prompt''):
 \end{equation}
 
 \subsection{Evaluation metrics}
-\textbf{JSON validity} is the share of outputs that parse and use only allowed values---a deployed system cannot use
-anything else. \textbf{Sentiment accuracy} compares the overall sentiment with the dataset's \emph{human} label.
+\textbf{JSON validity} is the share of outputs that parse and use only allowed values, since a downstream program cannot
+use anything else. \textbf{Sentiment accuracy} compares the overall sentiment with the dataset's \emph{human} label.
 \textbf{Aspect-F1} is the micro-averaged F1 over (aspect, sentiment) pairs, $F_1 = 2TP/(2TP+FP+FN)$, summed over all
-reviews; the opinion span is not scored because wording varies. On the test split the reference is the (filtered)
-teacher label; on the fresh set it is the adjudicated human label. Uncertainty is reported as 95\% intervals from 2{,}000
-bootstrap resamples of reviews~\cite{efron1993bootstrap}; differences between two models use paired resampling.
+reviews. The opinion span is not scored because wording varies. On the test split the reference is the (filtered)
+teacher label, and on the fresh set it is the adjudicated human label. Uncertainty is reported as 95\% intervals from
+2{,}000 bootstrap resamples of reviews~\cite{efron1993bootstrap}, with paired resampling for differences between two
+models.
 
-\textbf{Data discipline.} Hyper-parameters and checkpoints were chosen on the 142-review validation split only; each
+\textbf{Data discipline.} Hyper-parameters and checkpoints were chosen on the 142-review validation split only. Each
 model was scored on the 262-review test split exactly once, after the final configuration was fixed.
 
 % =====================================================================
@@ -160,7 +162,7 @@ model was scored on the 262-review test split exactly once, after the final conf
 
 \subsection{Setup}
 Table~\ref{tab:hparams} lists the default configuration. Training 480 steps (2.1 epochs) takes $\approx$94\,min on the
-laptop; validation loss is computed every 40 steps and a checkpoint is saved at the same interval.
+laptop, with validation loss computed and a checkpoint saved every 40 steps.
 
 \begin{table}[t]
 \centering
@@ -182,25 +184,24 @@ Selection & lowest validation loss (checkpoint every 40 steps) \\
 \subsection{Main result}
 Table~\ref{tab:main} compares the untuned base model, LoRA with the default configuration, and LoRA with the tuned
 learning rate. Fine-tuning fixes the format problem (90.8\%$\rightarrow$99.6--100\% valid JSON) and raises
-aspect-F1 by 0.220 (CI $[+0.164, +0.277]$); for the selected run (seed 42), tuning adds a further 0.073
-(CI $[+0.038, +0.110]$). Inference cost is unchanged at $\approx$0.6\,s per review (batched). These intervals capture
-only \emph{which test reviews were sampled}, not training randomness, so we retrained the tuned configuration with two
-more seeds (43, 44), again choosing each checkpoint by validation loss. Their test aspect-F1 is 0.790 and 0.805: the
-selected run sits at the top of the range, the three-seed mean is 0.801 (Table~\ref{tab:main}), and every seed beats
-the default by at least 0.056. The default itself was trained once on these data (a second seed, scored on validation
-only, moved F1 by 0.011), so the gain still carries some seed uncertainty on that side.
+aspect-F1 by 0.220 (CI $[+0.164, +0.277]$). For the selected run (seed 42), tuning adds a further 0.073
+(CI $[+0.038, +0.110]$). Inference cost is unchanged at $\approx$0.6\,s per review (batched). The bootstrap intervals
+reflect only which test reviews were sampled, so we also retrained the tuned configuration with two more seeds (43, 44),
+again choosing each checkpoint by validation loss. They score 0.790 and 0.805 on the test set. The selected run is the
+highest of the three, the three-seed mean is 0.801 (Table~\ref{tab:main}), and every seed beats the default by at least
+0.056.
 
 \textbf{Few-shot prompting and cost.} Table~\ref{tab:cost} compares the alternatives on the validation split under
 identical conditions. Showing the base model the teacher's four worked examples raises aspect-F1 only from 0.538 to 0.594
-and leaves its 8.5\% invalid outputs unchanged; LoRA reaches 0.802 with no invalid output. The teacher has 17.5$\times$
-more parameters than the student, but as a mixture-of-experts model it activates only 3.3B per token, 1.9$\times$ the
-student's 1.74B. Its weights take 17.2\,GB versus 3.5\,GB (4.9$\times$; peak memory during generation 19.8 vs.\
-5.7\,GB, 3.5$\times$), and it is 1.8$\times$ slower per review.
+and leaves its 8.5\% invalid outputs unchanged, while LoRA reaches 0.802 with no invalid output. The teacher has
+17.5$\times$ more parameters than the student, but as a mixture-of-experts model it activates only 3.3B per token,
+1.9$\times$ the student's 1.74B. Its weights take 17.2\,GB versus 3.5\,GB (4.9$\times$, or 3.5$\times$ at peak during
+generation: 19.8 vs.\ 5.7\,GB), and it is 1.8$\times$ slower per review.
 
 \begin{table}[t]
 \centering
 \caption{Test-set results (262 reviews, reference = filtered teacher labels). Each trained model evaluated once.
-$^\dagger$Mean of three training seeds, with min--max in parentheses; the selected seed-42 run scores 0.807
+$^\dagger$Mean of three training seeds, with the range in parentheses. The selected seed-42 run scores 0.807
 (CI 0.773--0.838).}
 \label{tab:main}
 \setlength{\tabcolsep}{1.8pt}
@@ -240,16 +241,14 @@ LoRA student & 1.74/1.74 & 3.5/5.7 & 0.75 & \textbf{1.000} & \textbf{0.802} \\
 We varied one factor at a time around the default: rank $r\in\{4,8,16,32\}$, learning rate
 $\in\{5{\times}10^{-5},10^{-4},2{\times}10^{-4}\}$ and the number of adapted (top) layers $\in\{8,16,28\}$, plus two
 diagnostic runs: the default with a different random seed, and $r=32$ with $s=10$ (Table~\ref{tab:sweep},
-Fig.~\ref{fig:sweep}). The seed run tells us how much a score moves by chance alone: validation aspect-F1 0.747 vs.\
-0.758. Three seeds of the selected configuration, run after the sweep, span 0.788--0.807, so we treat differences
-below $\approx$0.02 as noise. Because the validation split has only 142 reviews,
-even somewhat larger differences may partly reflect which reviews it happens to contain, so we draw conclusions only
-from large effects.
+Fig.~\ref{fig:sweep}). The seed run shows how much a score moves by chance alone: validation aspect-F1 0.747 vs.\
+0.758. Three seeds of the selected configuration, run after the sweep, span 0.788--0.807. We therefore treat differences
+below $\approx$0.02 as noise and draw conclusions only from larger effects.
 
 \begin{table}[t]
 \centering
 \caption{Sweep results on the validation split (142 reviews). Bold: selected configuration.
-$^\dagger$Run after selection, to measure seed variation; not used for choosing.}
+$^\dagger$Run after selection to measure seed variation, not used for choosing.}
 \label{tab:sweep}
 \setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{lrrrrr}
@@ -277,29 +276,28 @@ Top 16 layers & 10.0M & 200 & 0.126 & 0.760 & 65 \\
 \includegraphics[width=\textwidth]{sweep_val_curves}\\[1mm]
 \includegraphics[width=\textwidth]{sweep_metrics}
 \caption{One-factor-at-a-time sweep. Top: validation loss during training (dots mark the selected checkpoint).
-Bottom: validation aspect-F1 of the selected checkpoint; the grey band is the spread between two seeds of the default
+Bottom: validation aspect-F1 of the selected checkpoint. The grey band is the spread between two seeds of the default
 configuration, i.e.\ what chance alone can explain.}
 \label{fig:sweep}
 \end{figure*}
 
 \textbf{Learning rate matters most.} Halving it to $5\times10^{-5}$ gives the lowest validation loss (0.115) and the
-best F1 (0.793, $+0.035$); all three of its seeds (0.788--0.807) beat both seeds of the default (0.747--0.758).
-Doubling the learning rate to $2\times10^{-4}$---with a constant
-schedule and no warm-up---diverges within 40 steps
-(validation loss jumps from 2.6 to 7.1 and the model emits repeated punctuation), never recovering.
+best F1 (0.793, $+0.035$). All three of its seeds (0.788--0.807) beat both seeds of the default (0.747--0.758).
+Doubling the learning rate to $2\times10^{-4}$, with a constant schedule and no warm-up, makes training diverge within
+40 steps: validation loss jumps from 2.6 to 7.1, the model emits repeated punctuation, and it never recovers.
 
-\textbf{Larger rank is not better---because of the scale.} $r=32$ is clearly worse (0.697). Since MLX-LM multiplies the
-update by a fixed $s$ rather than $\alpha/r$, doubling $r$ also enlarges the effective update. Re-running $r=32$ with
+\textbf{Larger rank hurts because of the scale.} $r=32$ is clearly worse (0.697). MLX-LM multiplies the update by a
+fixed $s$ instead of $\alpha/r$, so doubling $r$ also enlarges the effective update. Re-running $r=32$ with
 $s=10$, i.e.\ keeping $\alpha=s\,r=320$ constant as in the original LoRA, restores F1 to 0.766, within noise of the
-default. This confirms the diagnosis and agrees with work on rank-dependent scaling~\cite{kalajdzievski2023rslora}.
+default, which agrees with work on rank-dependent scaling~\cite{kalajdzievski2023rslora}.
 Small ranks are sufficient for this narrow task: $r=4$ (4.4M parameters) scores 0.780.
 
 \textbf{Fewer layers are a free speed-up.} Adapting only the top 8 or 16 layers stays within the noise band while cutting
 training time from 94 to 46 or 65 minutes, since back-propagation stops at the lowest adapted layer.
 
 \textbf{Checkpoint selection matters.} Fig.~\ref{fig:loss} shows that at the start of the second epoch the training loss
-halves while validation loss stays flat---the model begins to memorise. In none of the eleven converged runs was the final
-checkpoint the best one; for $r=4$, validation loss rises from 0.118 at step 440 to 0.165 at step 480.
+halves while validation loss stays flat, as the model begins to memorise. In none of the eleven converged runs was the
+final checkpoint the best one. For $r=4$, validation loss rises from 0.118 at step 440 to 0.165 at step 480.
 
 \begin{figure}[t]
 \centering
@@ -313,18 +311,18 @@ checkpoints selected by validation loss.}
 The test split has two weaknesses: its reference labels come from the teacher, and it only contains reviews where the
 teacher agreed with the human sentiment label (an ``easier'' subset). We therefore drew 100 reviews that had never been
 used anywhere (10 per category, balanced by sentiment) and two group members labelled them with a purpose-built web tool
-that hides all model outputs. Twenty reviews were labelled by both annotators; the other 80 by one annotator only.
+that hides all model outputs. Twenty reviews were labelled by both annotators and the other 80 by one.
 Agreement on the shared 20 was modest (aspect-F1 0.644), so the two annotators jointly adjudicated the 20 disagreeing or
-contradictory items; afterwards each annotator's original labels reached 0.907 and 0.943 F1 against the final labels.
+contradictory items. Against the final labels, their original labels reach 0.907 and 0.943 F1.
 
 Table~\ref{tab:human} shows that the student clearly beats its base model ($+0.24$, CI $[+0.18, +0.31]$) and is
 statistically indistinguishable from the teacher (difference CI $[-0.05, +0.07]$). Sentiment accuracy is lower than on
-the test split (0.90 vs.\ 0.97), which confirms that the filtered test set is easier than real-world data.
+the test split (0.90 vs.\ 0.97), consistent with the filtered test set being easier than real-world data.
 
 To compare models with human agreement like for like, Table~\ref{tab:fair} scores every system against each annotator's
-\emph{original} labels on the 20 shared reviews. Annotator B agrees with A at 0.644; the student reaches 0.661 on
-average, the teacher 0.693 and the base model 0.419. With only 20 reviews the intervals are wide and overlap, so we
-cannot tell whether the models are above, at or below human agreement---only that both are far above the base model.
+\emph{original} labels on the 20 shared reviews. Annotator B agrees with A at 0.644. The student reaches 0.661 on
+average, the teacher 0.693 and the base model 0.419. With only 20 reviews the intervals are wide and overlap. Both
+models are far above the base model, but this sample cannot place them above or below human agreement.
 
 \begin{table}[t]
 \centering
@@ -383,20 +381,20 @@ customer writes ``this is cheating consumers''. Rare
 aspects (Location, Packaging, Authenticity, $n\le4$) have unreliable per-aspect scores.
 
 \subsection{Interactive prototype}
-The Gradio~\cite{abid2019gradio} app (Fig.~\ref{fig:demo}) loads the base model \emph{once}; setting $s=0$ in
+The Gradio~\cite{abid2019gradio} app (Fig.~\ref{fig:demo}) loads the base model \emph{once}. Setting $s=0$ in
 Eq.~(\ref{eq:lora}) switches every adapter off, so base and fine-tuned outputs are shown side by side without doubling
 memory. The page explains \emph{why} an invalid output cannot be used (e.g.\ ``aspect `taste' is not in the allowed
 list'') and highlights extracted opinions in the review. On five of its eight built-in examples the base model's output is
-invalid while the student's is correct. A dedicated inference thread, a request queue and a warm-up pass make it robust:
-12 simultaneous clients all succeeded, at $\approx$4\,s per request.
+invalid while the student's is correct. A dedicated inference thread, a request queue and a warm-up pass keep it
+stable under load: 12 simultaneous clients all succeeded, at $\approx$4\,s per request.
 
 A second section of the page turns the extractor into the merchant-facing summary motivated in Sec.~\ref{sec:intro}. Given up to 300 pasted or
 uploaded reviews, it aggregates the per-review records into the positive share, the most praised and most criticised
-aspects, per-aspect counts with example opinions, a chart and a downloadable CSV; 150 reviews take about 2 minutes.
-On three built-in samples of 150 never-used reviews (hotel, tablet, fruit), the overall verdict agrees with the star
-rating on 93--96\% of reviews, and the positive share is within 4 points of the ratings' (the dataset is balanced by
-construction, so only this agreement is informative). The complaints are specific: Room \& facilities (71 negative
-mentions) and Service (35) for the hotel, Defect (43) and Size \& weight (38) for the fruit.
+aspects, per-aspect counts with example opinions, a chart and a downloadable CSV. A batch of 150 reviews takes about
+2 minutes. On three built-in samples of 150 never-used reviews (hotel, tablet, fruit), the overall verdict agrees with
+the star rating on 93--96\% of reviews, and the positive share is within 4 points of the ratings' share. Because the
+dataset is balanced by design, the share itself says little about real products. The complaints are specific: Room \&
+facilities (71 negative mentions) and Service (35) for the hotel, Defect (43) and Size \& weight (38) for the fruit.
 
 \begin{figure}[t]
 \centering
@@ -406,40 +404,40 @@ mentions) and Service (35) for the hotel, Defect (43) and Size \& weight (38) fo
   \IfFileExists{figures/demo_screenshot.png}{\includegraphics[width=\figwidth]{demo_screenshot}}{%
   \fbox{\parbox[c][3.2cm][c]{0.9\columnwidth}{\centering\small [Gradio screenshot: save as \texttt{figures/demo\_screenshot.png}]}}}%
 }
-\caption{The Gradio demo on review~1 (``the fruit is great, no bruises, cheaper than the supermarket and tasty''): the base model (top) invents the aspect ``flavour'', which is not in the schema (it should be Taste); the LoRA model (bottom) returns valid output and highlights each opinion in the review.}
+\caption{The Gradio demo on review~1 (``the fruit is great, no bruises, cheaper than the supermarket and tasty''). The base model (top) invents the aspect ``flavour'', which is not in the schema (it should be Taste). The LoRA model (bottom) returns valid output and highlights each opinion in the review.}
 \label{fig:demo}
 \end{figure}
 
 % =====================================================================
 \section{Challenges and Conclusion}
 
-\textbf{Overfitting and checkpoint selection.} Our first model trained for three epochs; validation loss bottomed out
-after one. We now save a checkpoint every 40 steps and always deploy the one with the lowest validation loss.
+\textbf{Overfitting and checkpoint selection.} Our first model trained for three epochs, but validation loss bottomed
+out after one. We now save a checkpoint every 40 steps and always deploy the one with the lowest validation loss.
 
-\textbf{Ambiguous labels.} The largest single improvement came not from the model but from the label definitions: the
-first schema's overlapping ``Quality'' category caused errors that no amount of training could fix. We learned to measure
-schema clarity with a second annotator before relabelling the whole dataset, and to pilot new rules on 48--96 reviews
-first. Human annotators disagree too (0.644 before adjudication); adjudication is necessary for a trustworthy reference.
+\textbf{Ambiguous labels.} The largest single improvement came from the label definitions. The first schema's
+overlapping ``Quality'' category caused errors that no amount of training could fix. We learned to measure schema
+clarity with a second annotator before relabelling the whole dataset, and to pilot new rules on 48--96 reviews first.
+Human annotators also disagreed (0.644 before adjudication), so a trustworthy reference needed adjudication.
 
 \textbf{Memory and speed on a laptop.} Running the 17\,GB teacher together with the demo exhausted GPU memory (Metal
 out-of-memory), so heavy jobs are now scheduled one at a time and every long job is resumable. The richer v2 prompt
-($\approx$780 tokens) slowed inference from 0.34 to 0.58\,s per review; since the student has internalised the rules, a
+($\approx$780 tokens) slowed inference from 0.34 to 0.58\,s per review. Since the student has internalised the rules, a
 much shorter prompt is a promising optimisation. MLX also binds computation to the thread that loaded the model, which
 crashed our first multi-threaded web server and motivated the dedicated inference thread.
 
 \textbf{Limitations.} The test reference is teacher-generated. Apart from the final configuration (three seeds) and
-the default (two), each configuration was trained once, and even three seeds are few. Of the 100 human-labelled reviews, 80 have a
-single annotator and only 20 support the human--model comparison. The sweep varies one factor at a time on a 142-review
+the default (two seeds, the second scored on validation only), each configuration was trained once. Of the 100
+human-labelled reviews, 80 have a single annotator, and only 20 support the human-model comparison. The sweep varies one factor at a time on a 142-review
 validation set, so interactions (e.g.\ lr $5\times10^{-5}$ with $r=4$) are untested.
 
 \textbf{Conclusion.} A 1.7B model fine-tuned with LoRA on 1.8k teacher-labelled reviews, using only a laptop, produces
 valid structured output 99--100\% of the time and is statistically indistinguishable from its teacher against human
-judgement, with about a fifth of the teacher's weight memory.
-Systematic tuning added about 7 F1 points (at least 5.6 for each of three seeds), and the clearest lessons were about data: a precise label schema, a quality filter,
-and honest evaluation on data no model has seen.
+judgement, with about a fifth of the teacher's weight memory. Systematic tuning added about 7 F1 points (at least 5.6
+for each of three seeds). The clearest lessons were about data: a precise label schema, a quality filter, and
+evaluation on data that no model has seen.
 
 \textbf{Use of AI tools.} An AI coding assistant (Claude Code) was used to write and debug code and to draft
-documentation and parts of this report; all design decisions, annotations and final checks were made by the authors.
+documentation and parts of this report. All design decisions, annotations and final checks were made by the authors.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
