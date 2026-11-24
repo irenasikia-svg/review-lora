@@ -31,3 +31,33 @@ def test_recorded_outputs_complete():
         for side in ("base", "lora"):
             assert r[side]["raw"].strip() and r[side]["ms"] > 0
         assert parse_output(r["lora"]["raw"]) is not None  # 微调后 8 条都应是合格输出
+
+
+def _page_data(html):
+    """取出页面里内嵌的数据（<script type="application/json" id="rl-data">）。"""
+    start = html.index('<script type="application/json" id="rl-data">') + len('<script type="application/json" id="rl-data">')
+    return json.loads(html[start:html.index("</script>", start)])
+
+
+def test_page_is_self_contained():
+    from build_offline_demo import build_data, build_page
+    html = build_page(build_data())
+    for bad in ('src="http', "src='http", "url(http", "@import", "fonts.googleapis", 'rel="stylesheet"'):
+        assert bad not in html, bad
+
+
+def test_page_has_all_examples_and_reports():
+    from build_offline_demo import build_data, build_page
+    html = build_page(build_data())
+    assert html.count("data-example=") == 8 and html.count("data-report=") == 3
+    assert "Offline version" in html
+
+
+def test_cards_come_from_recording():
+    from build_offline_demo import build_data, build_page
+    from demo_render import result_card
+    data = build_data()
+    assert _page_data(build_page(data)) == data
+    for ex, rec in zip(data["examples"], _recorded()):
+        assert ex["base_html"] == result_card(rec["base"], rec["text"])[0]
+        assert ex["lora_html"] == result_card(rec["lora"], rec["text"])[0]
