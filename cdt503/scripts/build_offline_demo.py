@@ -55,6 +55,8 @@ def build_data():
 
 
 PAGE_CSS = """
+/* 现场页这两个变量来自 Gradio 主题（Soft 浅色），离线页没有主题，要自己定义，否则虚线框和分隔线都不显示 */
+:root { --border-color-primary: #e5e7eb; --body-text-color-subdued: #9ca3af; }
 body { margin: 0; font: 16px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
   "Microsoft YaHei", "Noto Sans SC", sans-serif; }
 .gradio-container { padding: 0 20px 40px; box-sizing: border-box; }
@@ -127,9 +129,10 @@ def build_page(data):
 {intro}
 <p class="od-note">Offline version: every result on this page was recorded from the real model (Qwen3-1.7B + our LoRA
 adapter, on an Apple M5 with MLX) and is replayed here. You can click the examples, but not type your own review.</p>
-{section_head("Try the demo.", "The same 1.7B model answers twice: as-is, and with our LoRA adapter.", "try")}
+{section_head("Try the demo.", "Recorded answers of the same 1.7B model: as-is, and with our LoRA adapter.", "try")}
 <div class="rl-window">
-  <p class="od-hint">Click an example. The base model answers first, then the fine-tuned one.</p>
+  <p class="od-hint">Recorded outputs from the real model, replayed here. Click an example: the base model answers
+  first, then the fine-tuned one.</p>
   <div class="od-pills">{ex_buttons}</div>
   <div class="rl-review" id="od-review">Pick an example above.</div>
   <div class="od-two">

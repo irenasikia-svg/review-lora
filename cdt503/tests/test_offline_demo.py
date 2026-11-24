@@ -61,3 +61,22 @@ def test_cards_come_from_recording():
     for ex, rec in zip(data["examples"], _recorded()):
         assert ex["base_html"] == result_card(rec["base"], rec["text"])[0]
         assert ex["lora_html"] == result_card(rec["lora"], rec["text"])[0]
+
+
+def test_demo_box_says_recorded():
+    """点开头按钮会直接跳到演示区，所以演示区里也要写明是录制回放。"""
+    from build_offline_demo import build_data, build_page
+    html = build_page(build_data())
+    box = html[html.index('id="try"'):html.index('id="od-review"')]
+    assert "Recorded" in box
+
+
+def test_css_variables_all_defined():
+    """离线页没有 Gradio 主题：CSS 里用到的每个 var(--x) 都要在页面自己的样式里定义。"""
+    import re
+    from build_offline_demo import PAGE_CSS
+    from demo_render import CSS
+    used = set(re.findall(r"var\((--[\w-]+)", CSS + PAGE_CSS))
+    defined = set(re.findall(r"(--[\w-]+)\s*:", CSS + PAGE_CSS))
+    defined.add("--i")  # --i 是 review_html 在每个高亮元素的 style 属性里设的
+    assert used <= defined, used - defined
