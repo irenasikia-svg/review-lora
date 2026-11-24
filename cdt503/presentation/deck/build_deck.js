@@ -101,8 +101,9 @@ async function main() {
     }
     text(s, line, x, y, line.length * cw + 0.2, bh, { fontSize: fs, color: C.text1, fontFace: CJK, valign: "middle" });
   };
-  const notes = (s, i) => s.addNotes(`[第 ${i + 1} 页 · ${SPEECH[i].speaker} · ${SPEECH[i].time}]\n\n` + SPEECH[i].say.join("\n\n") +
-    "\n\n—— " + SPEECH[i].tips);
+  // 演讲者备注：页码、讲者、时长，然后英文和中文对照
+  const notes = (s, i) => s.addNotes(`[第 ${i + 1} 页 · ${SPEECH[i].speaker} · 约 ${SPEECH[i].time}]\n\n` +
+    SPEECH[i].say.map((en, k) => `${en}\n${SPEECH[i].zh[k]}`).join("\n\n"));
   const W0 = (o = {}) => [{ text: "W", options: o }, { text: "0", options: { ...o, subscript: true } }];
 
   // ============ 1. 封面 ============
@@ -352,7 +353,7 @@ async function main() {
   for (const t of ["overfitting after epoch 1", "GPU out of memory", "long prompt, slower inference"]) {
     cx += chip(s, t, cx, 3.6, "neutral", { fontSize: 11 }) + 0.15;
   }
-  text(s, "Thank you — questions?", 0.5, 4.3, 5.5, 0.55, { fontSize: 24, bold: true, color: C.accent1, fontFace: THEME.headFontFace,
+  text(s, "Thank you", 0.5, 4.3, 5.5, 0.55, { fontSize: 24, bold: true, color: C.accent1, fontFace: THEME.headFontFace,
     valign: "middle" });
   text(s, "github.com/irenasikia-svg/review-lora", 6.0, 4.3, 3.5, 0.55, { fontSize: 10.5, color: C.accent5, align: "right",
     valign: "middle" });

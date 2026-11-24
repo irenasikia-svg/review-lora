@@ -1,6 +1,6 @@
 # 现场演示脚本（PPT 第 8 页，1 分 15 秒）
 
-A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英文就是 B 要说的话；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
+Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分），Han Daiyuan 不插话。下面的英文就是要说的话，和讲稿第 8 页一致；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
 
 **上台前**：演示已启动、终端显示"预热完成"；浏览器放大到投影看得清；屏幕角落放好扫码二维码。
 **开两个浏览器标签页，都打开演示网页**：第 2 个标签页往下滚到最后的 Product report 区，点上传框下面的 **Hotel · 150 reviews** 示例文件，再点 Generate report，等约 2 分钟出结果后**别刷新**；第 1 个标签页**留在页面顶部不要滚**——这样上台时开头的入场动画和数字计数会当着大家播放。演示讲到报告时切到第 2 个标签页，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
@@ -11,21 +11,21 @@ A（Han Daiyuan）操作电脑，B（Li Mingtai）对着观众讲。下面的英
 
 ### 0:00 — 开场（10 秒）
 
-A 切到浏览器第 1 个标签页（停在页面顶部，开头的动画会当场播放），点 **Try it live** 跳到演示区。
+切到浏览器第 1 个标签页（停在页面顶部，开头的动画会当场播放），点 **Try it live** 跳到演示区。
 
 > "This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it."
 
 ### 0:10 — 例子 1：原始模型不守规则（35 秒）
 
-A 点第 1 个示例 *果子特别棒没有伤比超市便宜又好吃*，再点 **Analyze**。
+点第 1 个示例 *果子特别棒没有伤比超市便宜又好吃*，再点 **Analyze**。
 
-预期：先是左边扫描、右边等待；约 2 秒后左边出 **✗ Invalid output — Aspect "味道" is not in the allowed list**，右边开始扫描；再约 2 秒右边出 ✓ Taste +、Price +，原文里的观点依次亮起。B 可以在右边扫描时说 "…and now the same model with our adapter"。
+预期：先是左边扫描、右边等待；约 2 秒后左边出 **✗ Invalid output — Aspect "味道" is not in the allowed list**，右边开始扫描；再约 2 秒右边出 ✓ Taste +、Price +，原文里的观点依次亮起。左边出结果后讲左边，右边出结果后再讲右边。
 
 > "A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive."
 
 ### 0:45 — 商品报告：从一条评论到一整个商品（20 秒）
 
-A 切到第 2 个标签页（提前生成好的报告，见"上台前"）。
+切到第 2 个标签页（提前生成好的报告，见"上台前"）。
 
 预期（2026-11-18 离线实测，`cdt503/results/product_report/hotel/`）：150 reviews、53% positive / 47% negative、0 unusable；Most praised：Room & facilities 53×、Location 45×、Service 37×；Most criticised：Room & facilities 71×、Service 35×、Price 24×；下方一行写星级 55% 好评、整体判断一致 93%。
 
@@ -41,7 +41,7 @@ A 切到第 2 个标签页（提前生成好的报告，见"上台前"）。
 **备用（时间够或被问到时）**：例子 6 *还没用，用了再来评价* → 右边 "No specific aspect mentioned."
 > "And when a review says nothing concrete, it doesn't make anything up."
 
-如果时间还够、有人报一句评论，A 就现场输入；时间紧就跳过，直接回到 PPT。
+如果时间还够、有人报一句评论，就现场输入；时间紧就跳过，直接回到 PPT。
 
 ---
 
@@ -57,7 +57,7 @@ A 切到第 2 个标签页（提前生成好的报告，见"上台前"）。
 
 ## 彩排检查
 
-- [ ] A 点击和 B 讲话的节奏对上（B 说完一句，A 再点下一个）
+- [ ] 点击和讲话的节奏：一句话说完再点下一步，等结果出来再讲
 - [ ] 每次 Analyze 等待约 3–4 秒，讲稿里留出等待时间，不要冷场：可以边等边说"the same model answers twice…"
 - [ ] 整段控制在 1 分 20 秒内
 - [ ] 两个标签页挨着放：第 1 个停在页面顶部（讲演示时点 "Try it live" 跳到演示区），第 2 个是生成好的报告；用 ⌘ + 1 / ⌘ + 2 切换

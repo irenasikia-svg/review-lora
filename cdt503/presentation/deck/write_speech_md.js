@@ -1,61 +1,55 @@
-// 从 speech.js 生成讲稿文档 cdt503/presentation/speech_script.md（按 PPT 页码排，和 PPT 备注同一份内容）
+// 生成双语讲稿：每页一节，英文一段、中文一段对照；每人一部分，末尾是这个人主答的问答准备。
+// 用法：node write_speech_md.js [讲稿文件] [输出前缀] [分钟数]
+// 输出（在 cdt503/presentation/ 下）：<前缀>.md（两人合在一起）、<前缀>_Han.md、<前缀>_Mingtai.md
 const fs = require("fs");
 const path = require("path");
-// 用法：node write_speech_md.js [讲稿文件] [输出文件名] [分钟数]，默认 8 分钟版
-const [SRC = "speech.js", OUTNAME = "speech_script.md", MINUTES = "8"] = process.argv.slice(2);
+const [SRC = "speech.js", PREFIX = "speech_script", MINUTES = "8"] = process.argv.slice(2);
 const SPEECH = require("./" + SRC);
-const LIMIT = Number(MINUTES) * 60;
+const QA = require("./qa.js");
 
 const toSec = (t) => { const [m, s] = t.split(":").map(Number); return m * 60 + s; };
 const fmt = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
-// 只数要念出来的词（方括号里的动作不算）
-const words = (p) => p.say.join(" ").replace(/\[[^\]]*\]/g, " ").split(/\s+/).filter(Boolean).length;
 
-let total = 0, totalWords = 0;
-const rows = SPEECH.map((p, i) => {
-  const sec = toSec(p.time), w = words(p);
-  total += sec; totalWords += w;
-  return `| 第 ${i + 1} 页 | ${p.title} | ${p.speaker} | ${p.time} | ${fmt(total)} | ${w} 词 |`;
+// 按讲者分成连续的几部分（每个人只出现一次）
+const parts = [];
+SPEECH.forEach((p, i) => {
+  const last = parts[parts.length - 1];
+  if (last && last.speaker === p.speaker) last.pages.push(i);
+  else parts.push({ speaker: p.speaker, pages: [i] });
 });
-const wpm = Math.round(totalWords / total * 60);
+const span = (part) => `第 ${part.pages[0] + 1}–${part.pages[part.pages.length - 1] + 1} 页`;
+const secs = (part) => part.pages.reduce((a, i) => a + toSec(SPEECH[i].time), 0);
+const total = SPEECH.reduce((a, p) => a + toSec(p.time), 0);
 
-// 动作 [..] 单独成行，用斜体标出；念的部分放引用块
-const render = (t) => {
-  const m = t.match(/^\[([^\]]*)\]\s*(.*)$/);
-  return m ? [`*动作：${m[1]}*`, "", `> ${m[2]}`] : [`> ${t}`];
-};
+// 英文一段，下面跟中文一段（中文缩进显示）
+const pair = (en, zh) => [en, "", `> ${zh}`, ""];
 
-const out = [
-  `# 讲稿：Beyond Star Ratings（${MINUTES} 分钟版，按 PPT 页码）`,
-  "",
-  "**A = Han Daiyuan，B = Li Mingtai。** 每一节对应 PPT 的一页。引用块里的英文是要说的话，*动作* 不念出来，「提示」是给自己看的中文说明。",
-  `语速按每分钟约 ${wpm} 个英文词写（比平时说话慢一些）；每页讲完停一拍再翻页。对应的 PPT 每页演讲者备注里是同一份内容（改 \`deck/${SRC}\` 一处，两边同步）。`,
-  "",
-  "| PPT 页码 | 标题 | 讲者 | 时长 | 累计 | 字数 |",
-  "|---|---|---|---|---|---|",
-  ...rows,
-  "",
-  `总长 ${fmt(total)}，共 ${totalWords} 词，比 ${MINUTES} 分钟留出约 ${fmt(LIMIT - total)} 余量。`,
-  "",
-  ...SPEECH.flatMap((p, i) => [
-    "---", "",
-    `## PPT 第 ${i + 1} 页：${p.title}`, "",
-    `**${p.speaker} · ${p.time}**（讲完时累计 ${fmt(SPEECH.slice(0, i + 1).reduce((a, q) => a + toSec(q.time), 0))}）`, "",
-    `屏幕上：${p.screen}`, "",
-    ...p.say.flatMap((t) => [...render(t), ""]),
-    `提示：${p.tips}`, "",
-    i < SPEECH.length - 1 ? `→ 翻到第 ${i + 2} 页` : "→ 进入问答（2 分钟）",
-    "",
+const partLines = (part, n) => [
+  `## 第${"一二三四"[n]}部分：${part.speaker}（${span(part)}，约 ${fmt(secs(part))}）`, "",
+  ...part.pages.flatMap((i) => {
+    const p = SPEECH[i];
+    return [`### 第 ${i + 1} 页 · ${p.title}（约 ${p.time}）`, "", ...p.say.flatMap((en, k) => pair(en, p.zh[k]))];
+  }),
+  `### ${part.speaker} 的问答准备`, "",
+  ...QA.filter((q) => q.who === part.speaker).flatMap((q, k) => [
+    `**Q${k + 1}. ${q.q}**`, "", `> ${q.qZh}`, "", q.a, "", `> ${q.aZh}`, "",
   ]),
-  "---",
-  "",
-  "## 彩排检查",
-  "",
-  `- [ ] 用手机计时完整讲两遍，总长不超过 ${MINUTES} 分钟；第 6 页（调参）和第 8 页（演示）最容易超时`,
-  "- [ ] 第 4 页结尾 A 交给 B、第 7 页结尾切到浏览器、第 9 页 A 交给 B，这三处交接要顺",
-  "- [ ] 演示前已在第 2 个浏览器标签页生成好 Hotel 报告，第 1 个标签页停在页面顶部（见 demo_script.md）",
-  "- [ ] 问答准备见 qa_prep.md，两人各自熟悉自己主答的题",
-  "",
 ];
-fs.writeFileSync(path.resolve(__dirname, "..", OUTNAME), out.join("\n"));
-console.log(`已生成讲稿 ${OUTNAME}：${fmt(total)}，${totalWords} 词，约 ${wpm} 词/分钟`);
+
+const header = (who) => [
+  `# 讲稿：Beyond Star Ratings（${MINUTES} 分钟版${who ? `，${who}` : ""}）`, "",
+  parts.map((part) => `${part.speaker}：${span(part)}，约 ${fmt(secs(part))}`).join("。") + `。全程约 ${fmt(total)}。`, "",
+  "每页先英文、后中文对照。完整的问答准备见 qa_prep.md。", "",
+];
+
+const write = (name, lines) => {
+  fs.writeFileSync(path.resolve(__dirname, "..", name), lines.join("\n"));
+  console.log("已生成", name);
+};
+write(`${PREFIX}.md`, [...header(), ...parts.flatMap((part, n) => partLines(part, n))]);
+parts.forEach((part, n) => {
+  const short = part.speaker.split(" ").pop();  // Daiyuan / Mingtai
+  const tag = part.speaker.startsWith("Han") ? "Han" : short;
+  write(`${PREFIX}_${tag}.md`, [...header(part.speaker), ...partLines(part, n)]);
+});
+console.log(`总长 ${fmt(total)}`);
