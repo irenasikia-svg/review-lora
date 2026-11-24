@@ -101,9 +101,9 @@ async function main() {
     }
     text(s, line, x, y, line.length * cw + 0.2, bh, { fontSize: fs, color: C.text1, fontFace: CJK, valign: "middle" });
   };
-  // 演讲者备注：页码、讲者、时长，然后英文和中文对照
+  // 演讲者备注：页码、讲者、时长，然后整段英文、整段中文
   const notes = (s, i) => s.addNotes(`[第 ${i + 1} 页 · ${SPEECH[i].speaker} · 约 ${SPEECH[i].time}]\n\n` +
-    SPEECH[i].say.map((en, k) => `${en}\n${SPEECH[i].zh[k]}`).join("\n\n"));
+    SPEECH[i].say.join(" ") + "\n\n" + SPEECH[i].zh.join(""));
   const W0 = (o = {}) => [{ text: "W", options: o }, { text: "0", options: { ...o, subscript: true } }];
 
   // ============ 1. 封面 ============
