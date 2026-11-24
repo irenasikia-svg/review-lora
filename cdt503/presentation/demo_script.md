@@ -49,7 +49,7 @@ Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分�
 
 | 情况 | 做法 | 说法 |
 |---|---|---|
-| 页面打不开 / 卡住超过 10 秒 | 立刻切到备用视频 | "Let me show you a recording of the same demo." |
+| 页面打不开 / 卡住超过 10 秒 | 点 PPT 第 8 页的离线演示链接（没网就双击 `pre/离线演示_Offline_Demo.html`），用录好的真实输出继续讲 | "Let me show you the same demo with recorded outputs." |
 | 结果和预期不一样 | 照实讲出现的结果，不要假装 | "The model is deterministic, but here it shows … — that's exactly the kind of boundary case we discuss in our error analysis." |
 | 观众输入的评论模型答错了 | 承认并联系错误分析 | "Good example — it confuses build quality with performance, which is our most common error." |
 | 同学扫码打不开 | 不等，继续讲 | "The link may be blocked by the campus network — we'll share it after class." |

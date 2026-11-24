@@ -332,6 +332,10 @@ async function main() {
   { color: C.text1 });
   text(s, [{ text: "Scan the QR code to try it", options: { bold: true } }], 0.55, 4.45, 5.5, 0.35,
     { fontSize: 13, color: C.accent4 });
+  // 离线演示（GitHub Pages）：现场演示出问题时点这里，同学课后也能打开
+  text(s, [{ text: "Offline demo: irenasikia-svg.github.io/review-lora", options: {
+    hyperlink: { url: "https://irenasikia-svg.github.io/review-lora/", tooltip: "Offline demo with recorded model outputs" },
+    underline: { style: "sng" }, color: HEX.accent4 } }], 0.55, 4.82, 5.5, 0.3, { fontSize: 12, objectName: "offline demo link" });
   const kpiBottom = img("report_kpis.png", 6.4, 1.2, 3.1, "Product report: KPIs and top aspects");
   img("report_chart.png", 6.4, kpiBottom + 0.2, 3.1, "Product report: aspects mentioned, by sentiment", 4.95 - kpiBottom - 0.2);
   notes(s, 7);
