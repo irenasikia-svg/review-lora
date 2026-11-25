@@ -1,40 +1,40 @@
 # 讲稿：Beyond Star Ratings（6 分钟版）
 
-Han Daiyuan：第 1–5 页，约 2:25。Li Mingtai：第 6–9 页，约 3:10。全程约 5:35。
+Han Daiyuan：第 1–5 页，约 3:05。Li Mingtai：第 6–9 页，约 3:10。全程约 6:15。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
-## 第一部分：Han Daiyuan（第 1–5 页，约 2:25）
+## 第一部分：Han Daiyuan（第 1–5 页，约 3:05）
 
-### 第 1 页 · Beyond Star Ratings（约 0:25）
+### 第 1 页 · Beyond Star Ratings（约 0:20）
 
-Good morning. We are Han Daiyuan and Li Mingtai. A star rating says whether a customer is happy, but not why. This hotel review has three signals: a good location, a noisy room, and a slow check-in. Our model finds them automatically.
+Good morning. We are Han Daiyuan and Li Mingtai. A star rating says whether a customer is happy, but not why. This hotel review has three signals: a good location, a noisy room, and a slow check-in.
 
-> 大家早上好，我们是 Han Daiyuan 和 Li Mingtai。星级评分能说明顾客满不满意，却说不出原因。这条酒店评论里有三个信号：位置好、房间吵、入住慢。我们的模型能自动把它们找出来。
+> 大家早上好，我们是 Han Daiyuan 和 Li Mingtai。星级评分能说明顾客满不满意，却说不出原因。这条酒店评论里有三个信号：位置好、房间吵、入住慢。
 
-### 第 2 页 · One review in, one countable record out（约 0:25）
+### 第 2 页 · One review in, one countable record out（约 0:35）
 
-Our model turns each review into a record like this: the overall sentiment, and each aspect with the customer's own words. Aspects come from a fixed list of sixteen, so a program can count them.
+Our model reads a Chinese review and writes a record like this: the overall sentiment, and each aspect with the customer's own words. Aspects come from a fixed list of sixteen, so a program can count them. A shopper can compare three phones by what buyers praise and criticise. A seller can see which part of their own product draws the most complaints.
 
-> 模型会把每条评论变成这样一条记录：整体情感，以及每个方面和顾客的原话。方面都来自一张固定的 16 项清单，所以程序可以直接统计。
+> 我们的模型读一条中文评论，输出这样一条记录：整体情感，以及每个方面和顾客的原话。方面都来自一张固定的 16 项清单，所以程序可以直接统计。买家可以货比三家，看三款手机各被夸什么、各被批评什么。卖家可以分析自己店里的评论，看产品哪个方面被抱怨得最多。
 
-### 第 3 页 · Messy data, cleaned and labelled（约 0:35）
+### 第 3 页 · Messy data, cleaned and labelled（约 0:45）
 
-We used 62,774 real shopping reviews, and the data is messy. One copy-pasted template appears twenty-three times. After cleaning, we sampled 2,425 reviews. A thirty-billion-parameter teacher model labelled them with our guideline. Clearer rules with sixteen aspects cut its errors from forty to fifteen, and a quality filter left 2,228 reviews.
+Our data is a public dataset, online shopping ten categories: 62,774 Chinese reviews of phones, books, fruit, hotels and more, each marked positive or negative by a person. It is messy: one copy-pasted template appears twenty-three times. We removed empty and duplicate reviews, kept those of 12 to 160 characters, and sampled 2,425, balanced by category and sentiment. Our first guideline had twelve overlapping aspects. Sixteen aspects with clear rules cut the teacher's errors from forty to fifteen.
 
-> 我们用了 62,774 条真实的网购评论，数据很脏，有一条复制粘贴的模板出现了 23 次。清洗之后我们抽了 2,425 条，由 300 亿参数的老师模型按我们的规则标注。改成 16 个方面、规则写清楚之后，它的错误从 40 个降到 15 个，质量过滤后剩下 2,228 条。
+> 我们的数据是一个公开数据集，叫 online shopping 10 cats：62,774 条中文网购评论，涉及手机、书籍、水果、酒店等十个类目，每条都有人工标注的好评或差评。数据很脏，有一条复制粘贴的模板出现了 23 次。我们删掉空评论和重复评论，只保留 12 到 160 个字的，再按类目和好差评均衡地抽了 2,425 条。第一版标注规则有 12 个互相重叠的方面，改成 16 个方面、把规则写清楚之后，老师模型的错误从 40 个降到了 15 个。
 
-### 第 4 页 · A 30B teacher labels, a 1.7B student learns（约 0:35）
+### 第 4 页 · A 30B teacher labels, a 1.7B student learns（约 0:45）
 
-Here is the whole system, all on one laptop. The teacher labels, the filter checks, and a 1.7-billion-parameter student learns with LoRA. We chose the best of ten versions on validation data only, then used it on the test set, on 100 reviews we labelled ourselves, and in the demo.
+The teacher is Qwen3-30B, a mixture-of-experts model with 30 billion parameters, of which only 3 billion are active for each token. Running on our laptop, it labelled all 2,425 reviews in about fifty minutes. A filter removed labels that were not valid JSON or that contradicted the human star rating, which left 2,228 reviews. We split them into 1,824 for training, 142 for validation and 262 for testing. The student is Qwen3-1.7B, a much smaller model with 1.7 billion parameters.
 
-> 这是整个系统，全部在一台笔记本上运行。老师模型标注，过滤器把关，17 亿参数的学生模型用 LoRA 学习。我们从十个版本里只用验证集挑出最好的一个，然后用在测试集、我们自己标注的 100 条评论和现场演示上。
+> 老师模型是 Qwen3-30B，一个混合专家模型，总共 300 亿参数，但每个词只激活其中约 30 亿。它在我们的笔记本上运行，大约 50 分钟就标完了 2,425 条评论。过滤器去掉了格式不合格、或者和人工星级矛盾的标注，剩下 2,228 条。我们把它们分成训练集 1,824 条、验证集 142 条、测试集 262 条。学生模型是 Qwen3-1.7B，一个小得多的模型，只有 17 亿参数。
 
-### 第 5 页 · LoRA: train 1% of the weights（约 0:25）
+### 第 5 页 · LoRA: train 1% of the weights（约 0:40）
 
-LoRA freezes the original weights and trains two small matrices, A and B. That is only one percent of the weights, a 70-megabyte file, and about an hour and a half of training on a laptop. Li Mingtai will now explain the tuning and the results.
+We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent. Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Li Mingtai will now explain the tuning and the results.
 
-> LoRA 把原来的权重冻结，只训练两个小矩阵 A 和 B。这只占全部权重的 1%，是一个 70 MB 的文件，在笔记本上训练大约一个半小时。接下来由 Li Mingtai 介绍调参和结果。
+> 我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。接下来由 Li Mingtai 介绍调参和结果。
 
 ## 第二部分：Li Mingtai（第 6–9 页，约 3:10）
 

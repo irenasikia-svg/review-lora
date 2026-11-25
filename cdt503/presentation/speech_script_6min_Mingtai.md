@@ -1,6 +1,6 @@
 # 讲稿：Beyond Star Ratings（6 分钟版，Li Mingtai）
 
-Han Daiyuan：第 1–5 页，约 2:25。Li Mingtai：第 6–9 页，约 3:10。全程约 5:35。
+Han Daiyuan：第 1–5 页，约 3:05。Li Mingtai：第 6–9 页，约 3:10。全程约 6:15。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
