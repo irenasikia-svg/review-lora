@@ -1,13 +1,13 @@
-# 现场演示脚本（PPT 第 8 页，1 分 15 秒）
+# 现场演示脚本（PPT 第 6 页，约 1 分 20 秒）
 
-Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分），Han Daiyuan 不插话。下面的英文就是要说的话，和讲稿第 8 页一致；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
+Han Daiyuan 一个人操作电脑并讲解，Li Mingtai 不插话。演示放在 LoRA 那页之后，讲完交给 Li Mingtai 讲调参和结果。下面的英文就是要说的话，和讲稿第 6 页一致；"预期"是页面上应该出现的结果（2026-10-29 实测，见 `cdt503/DEMO.md` 的表格）。
 
 **上台前**：演示已启动、终端显示"预热完成"；浏览器放大到投影看得清；屏幕角落放好扫码二维码。
 **开两个浏览器标签页，都打开演示网页**：第 2 个标签页往下滚到最后的 Product report 区，点上传框下面的 **Hotel · 150 reviews** 示例文件，再点 Generate report，等约 2 分钟出结果后**别刷新**；第 1 个标签页**留在页面顶部不要滚**——这样上台时开头的入场动画和数字计数会当着大家播放。演示讲到报告时切到第 2 个标签页，不现场等。生成完再让同学扫码（生成期间单条请求要排队）。
 
 ---
 
-讲的话和 `speech_script.md` 第 8 页一致（语速放慢后只演示例子 1 和商品报告，例子 4 改为备用）。
+讲的话和 `speech_script.md` 第 6 页一致（语速放慢后只演示例子 1 和商品报告，例子 4 改为备用）。
 
 ### 0:00 — 开场（10 秒）
 
@@ -33,7 +33,7 @@ Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分�
 
 ### 1:05 — 请观众试（10 秒）
 
-> "You can try it yourself. Just scan the QR code."
+> "You can try it yourself. Just scan the QR code. Next, Li Mingtai will show how we tuned it and how well it works."
 
 **备用（时间够或被问到时）**：例子 4（酒店）→ 左边 ✗ sentiment "中性"（neutral 不在规则里），右边 Location +、Room & facilities −、Service −。
 > "One hotel review, three signals: location good, room bad, service bad. The base model answers neutral, which our schema does not allow."
@@ -41,7 +41,7 @@ Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分�
 **备用（时间够或被问到时）**：例子 6 *还没用，用了再来评价* → 右边 "No specific aspect mentioned."
 > "And when a review says nothing concrete, it doesn't make anything up."
 
-如果时间还够、有人报一句评论，就现场输入；时间紧就跳过，直接回到 PPT。
+如果时间还够、有人报一句评论，就现场输入；时间紧就跳过，直接回到 PPT，翻到第 7 页交给 Li Mingtai。
 
 ---
 
@@ -49,7 +49,7 @@ Li Mingtai 一个人操作电脑并讲解（Gradio 演示是他负责的部分�
 
 | 情况 | 做法 | 说法 |
 |---|---|---|
-| 页面打不开 / 卡住超过 10 秒 | 点 PPT 第 8 页的离线演示链接（没网就双击 `pre/离线演示_Offline_Demo.html`），用录好的真实输出继续讲 | "Let me show you the same demo with recorded outputs." |
+| 页面打不开 / 卡住超过 10 秒 | 点 PPT 第 6 页的离线演示链接（没网就双击 `503 pre/离线演示_Offline_Demo.html`），用录好的真实输出继续讲 | "Let me show you the same demo with recorded outputs." |
 | 结果和预期不一样 | 照实讲出现的结果，不要假装 | "The model is deterministic, but here it shows … — that's exactly the kind of boundary case we discuss in our error analysis." |
 | 观众输入的评论模型答错了 | 承认并联系错误分析 | "Good example — it confuses build quality with performance, which is our most common error." |
 | 同学扫码打不开 | 不等，继续讲 | "The link may be blocked by the campus network — we'll share it after class." |

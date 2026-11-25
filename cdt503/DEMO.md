@@ -7,7 +7,7 @@
 | 1 | `--share` 公网链接，同学用手机扫码试用 | 外网 + Gradio 的转发服务 |
 | 2 | 同一 Wi-Fi 下用局域网 IP 访问 | 教室 Wi-Fi 允许设备互访（或用手机热点） |
 | 3 | 只在讲台电脑上演示 | 只要 Mac 本身能跑 |
-| 4 | 离线演示页：https://irenasikia-svg.github.io/review-lora/ （PPT 第 8 页有链接；没网时双击本地副本） | 不依赖模型，回放真实录制的输出 |
+| 4 | 离线演示页：https://irenasikia-svg.github.io/review-lora/ （PPT 第 6 页有链接；没网时双击本地副本） | 不依赖模型，回放真实录制的输出 |
 | 5 | 播放提前录好的视频 | 什么都不依赖 |
 
 ## 一键启动（推荐）

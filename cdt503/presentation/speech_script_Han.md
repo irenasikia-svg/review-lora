@@ -1,10 +1,10 @@
 # 讲稿：Beyond Star Ratings（8 分钟版，Han Daiyuan）
 
-Han Daiyuan：第 1–5 页，约 3:25。Li Mingtai：第 6–9 页，约 4:05。全程约 7:30。
+Han Daiyuan：第 1–6 页，约 4:45。Li Mingtai：第 7–9 页，约 2:45。全程约 7:30。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
-## 第一部分：Han Daiyuan（第 1–5 页，约 3:25）
+## 第一部分：Han Daiyuan（第 1–6 页，约 4:45）
 
 ### 第 1 页 · Beyond Star Ratings（约 0:30）
 
@@ -32,9 +32,15 @@ Here is the whole system, and it all runs on one Apple laptop. The teacher label
 
 ### 第 5 页 · LoRA: train 1% of the weights（约 0:40）
 
-How can a laptop train the student? Training all 1.7 billion weights would not fit. LoRA freezes the original weights, W-zero, and adds two small matrices, A and B. Only these two are trained. That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Next, Li Mingtai will show how we tuned it and what we found.
+How can a laptop train the student? Training all 1.7 billion weights would not fit. LoRA freezes the original weights, W-zero, and adds two small matrices, A and B. Only these two are trained. That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Now let me show you what it can do.
 
-> 一台笔记本怎么训练学生模型？17 亿个权重全部训练是放不下的。LoRA 把原来的权重 W0 冻结，在旁边加两个小矩阵 A 和 B，只训练这两个。这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。接下来由 Li Mingtai 介绍我们怎么调参，以及得到了什么结果。
+> 一台笔记本怎么训练学生模型？17 亿个权重全部训练是放不下的。LoRA 把原来的权重 W0 冻结，在旁边加两个小矩阵 A 和 B，只训练这两个。这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。下面我来现场演示它能做什么。
+
+### 第 6 页 · Live demo（约 1:20）
+
+This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it. A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive. And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service. You can try it yourself. Just scan the QR code. Next, Li Mingtai will show how we tuned it and how well it works.
+
+> 这是在这台笔记本上实时运行的。同一个模型回答两次：左边不带我们的适配器，右边带上。这位顾客说水果很好、又便宜。原始模型自己编了一个方面叫“味道”，不在我们的清单里。加上适配器之后，得到的是口味和价格，都是好评。这是店主看到的 150 条酒店评论的报告。53% 是好评，和星级评分很接近，差评最多的是房间和服务。大家也可以自己试，扫这个二维码就行。接下来由 Li Mingtai 介绍我们怎么调参，以及效果怎么样。
 
 ## 问答准备
 

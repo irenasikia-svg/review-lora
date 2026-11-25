@@ -1,10 +1,10 @@
 # 讲稿：Beyond Star Ratings（6 分钟版，Han Daiyuan）
 
-Han Daiyuan：第 1–5 页，约 3:05。Li Mingtai：第 6–9 页，约 3:10。全程约 6:15。
+Han Daiyuan：第 1–6 页，约 4:10。Li Mingtai：第 7–9 页，约 2:05。全程约 6:15。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
-## 第一部分：Han Daiyuan（第 1–5 页，约 3:05）
+## 第一部分：Han Daiyuan（第 1–6 页，约 4:10）
 
 ### 第 1 页 · Beyond Star Ratings（约 0:20）
 
@@ -32,9 +32,15 @@ The teacher is Qwen3-30B, a mixture-of-experts model with 30 billion parameters,
 
 ### 第 5 页 · LoRA: train 1% of the weights（约 0:40）
 
-We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent. Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Li Mingtai will now explain the tuning and the results.
+We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent. Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Now let me show you what it can do.
 
-> 我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。接下来由 Li Mingtai 介绍调参和结果。
+> 我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。下面我来现场演示它能做什么。
+
+### 第 6 页 · Live demo（约 1:05）
+
+This is running live. The same model answers twice. Without our adapter, it invents an aspect, flavour, which is not on our list. With the adapter, we get Taste and Price, both positive. And this is the report for 150 hotel reviews: 53 percent positive, and the top complaints are rooms and service. Scan the QR code to try it. Li Mingtai will now explain the tuning and the results.
+
+> 这是实时运行的。同一个模型回答两次。不带适配器时，它自己编了一个方面叫“味道”，不在我们的清单里。带上适配器，得到的是口味和价格，都是好评。这是 150 条酒店评论的报告：53% 是好评，差评最多的是房间和服务。扫二维码就可以自己试。接下来由 Li Mingtai 介绍调参和结果。
 
 ## 问答准备
 

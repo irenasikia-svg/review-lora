@@ -1,10 +1,10 @@
 # 讲稿：Beyond Star Ratings（8 分钟版）
 
-Han Daiyuan：第 1–5 页，约 3:25。Li Mingtai：第 6–9 页，约 4:05。全程约 7:30。
+Han Daiyuan：第 1–6 页，约 4:45。Li Mingtai：第 7–9 页，约 2:45。全程约 7:30。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
-## 第一部分：Han Daiyuan（第 1–5 页，约 3:25）
+## 第一部分：Han Daiyuan（第 1–6 页，约 4:45）
 
 ### 第 1 页 · Beyond Star Ratings（约 0:30）
 
@@ -32,29 +32,29 @@ Here is the whole system, and it all runs on one Apple laptop. The teacher label
 
 ### 第 5 页 · LoRA: train 1% of the weights（约 0:40）
 
-How can a laptop train the student? Training all 1.7 billion weights would not fit. LoRA freezes the original weights, W-zero, and adds two small matrices, A and B. Only these two are trained. That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Next, Li Mingtai will show how we tuned it and what we found.
+How can a laptop train the student? Training all 1.7 billion weights would not fit. LoRA freezes the original weights, W-zero, and adds two small matrices, A and B. Only these two are trained. That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Now let me show you what it can do.
 
-> 一台笔记本怎么训练学生模型？17 亿个权重全部训练是放不下的。LoRA 把原来的权重 W0 冻结，在旁边加两个小矩阵 A 和 B，只训练这两个。这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。接下来由 Li Mingtai 介绍我们怎么调参，以及得到了什么结果。
+> 一台笔记本怎么训练学生模型？17 亿个权重全部训练是放不下的。LoRA 把原来的权重 W0 冻结，在旁边加两个小矩阵 A 和 B，只训练这两个。这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。下面我来现场演示它能做什么。
 
-## 第二部分：Li Mingtai（第 6–9 页，约 4:05）
+### 第 6 页 · Live demo（约 1:20）
 
-### 第 6 页 · Tuning: the learning rate matters most（约 1:00）
+This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it. A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive. And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service. You can try it yourself. Just scan the QR code. Next, Li Mingtai will show how we tuned it and how well it works.
+
+> 这是在这台笔记本上实时运行的。同一个模型回答两次：左边不带我们的适配器，右边带上。这位顾客说水果很好、又便宜。原始模型自己编了一个方面叫“味道”，不在我们的清单里。加上适配器之后，得到的是口味和价格，都是好评。这是店主看到的 150 条酒店评论的报告。53% 是好评，和星级评分很接近，差评最多的是房间和服务。大家也可以自己试，扫这个二维码就行。接下来由 Li Mingtai 介绍我们怎么调参，以及效果怎么样。
+
+## 第二部分：Li Mingtai（第 7–9 页，约 2:45）
+
+### 第 7 页 · Tuning: the learning rate matters most（约 1:00）
 
 Thank you, Han. We tuned the model one setting at a time, using only the validation set. First, how much is just luck? With a different random seed, the score moves by about 0.02. So we only trust bigger gaps. Three findings. One: the learning rate matters most. 5e-5 gave the best score, 0.793, and all three of its seeds beat the default. Two: a bigger rank is not better. Rank 32 dropped to 0.697, because in MLX a bigger rank also means a bigger update. Fixing the scale brought it back. Three: training only the top eight layers takes half the time, with similar quality.
 
 > 谢谢 Han。我们每次只改一个设置来调参，而且只看验证集。先看运气的影响有多大：换一个随机种子，分数会变动大约 0.02，所以我们只相信比这更大的差距。三个发现。第一，学习率最重要。5e-5 得分最高，是 0.793，而且它的三个种子都超过了默认配置。第二，rank 越大不一定越好。rank 32 掉到了 0.697，因为在 MLX 里 rank 变大，更新幅度也跟着变大。把缩放系数调回来，分数就恢复了。第三，只训练最上面 8 层，时间减半，效果差不多。
 
-### 第 7 页 · Near-teacher quality, a fifth of the memory（约 0:55）
+### 第 8 页 · Near-teacher quality, a fifth of the memory（约 0:50）
 
-Here are the results. On 262 test reviews, the base model scores 0.51. LoRA with default settings scores 0.73, and the tuned model 0.80, averaged over three seeds. Almost every output is now valid JSON. On the right is a harder test: 100 new reviews that Han and I labelled ourselves. Our student scores 0.70, and the thirty-billion-parameter teacher 0.69. Statistically, they are the same. But the student needs about a fifth of the memory, and it is almost twice as fast. Just giving the base model examples only reaches 0.59. Now, let me show you.
+Here are the results. On 262 test reviews, the base model scores 0.51. LoRA with default settings scores 0.73, and the tuned model 0.80, averaged over three seeds. Almost every output is now valid JSON. On the right is a harder test: 100 new reviews that Han and I labelled ourselves. Our student scores 0.70, and the thirty-billion-parameter teacher 0.69. Statistically, they are the same. But the student needs about a fifth of the memory, and it is almost twice as fast. Just giving the base model examples only reaches 0.59.
 
-> 这是结果。在 262 条测试评论上，原始模型得分 0.51，默认设置的 LoRA 是 0.73，调参后的模型是 0.80，这是三个种子的平均。现在几乎每条输出都是合格的 JSON。右边是更难的测试：我和 Han 自己标注的 100 条新评论。学生模型得分 0.70，300 亿参数的老师模型是 0.69，统计上没有差别。但学生模型只需要大约五分之一的内存，速度快将近一倍。只给原始模型看几个示例，最多只能到 0.59。下面我来现场演示。
-
-### 第 8 页 · Live demo（约 1:15）
-
-This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it. A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive. And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service. You can try it yourself. Just scan the QR code.
-
-> 这是在这台笔记本上实时运行的。同一个模型回答两次：左边不带我们的适配器，右边带上。这位顾客说水果很好、又便宜。原始模型自己编了一个方面叫“味道”，不在我们的清单里。加上适配器之后，得到的是口味和价格，都是好评。这是店主看到的 150 条酒店评论的报告。53% 是好评，和星级评分很接近，差评最多的是房间和服务。大家也可以自己试，扫这个二维码就行。
+> 这是结果。在 262 条测试评论上，原始模型得分 0.51，默认设置的 LoRA 是 0.73，调参后的模型是 0.80，这是三个种子的平均。现在几乎每条输出都是合格的 JSON。右边是更难的测试：我和 Han 自己标注的 100 条新评论。学生模型得分 0.70，300 亿参数的老师模型是 0.69，统计上没有差别。但学生模型只需要大约五分之一的内存，速度快将近一倍。只给原始模型看几个示例，最多只能到 0.59。
 
 ### 第 9 页 · What we learned（约 0:55）
 

@@ -265,51 +265,10 @@ async function main() {
   });
   notes(s, 4);
 
-  // ============ 6. 调参 ============
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Training" });
-  s.addText(SPEECH[5].title, { placeholder: "title" });
-  charts.push({ slide: 6, kind: "bar", x: 0.35, y: 1.05, w: 6.0, h: 3.9, title: "Validation aspect-F1 (142 reviews)",
-    min: 0.65, max: 0.82, major: 0.05, rows: [["Default", 0.758, "1F2330"], ["r = 4", 0.780, "C3C7D4"],
-      ["r = 8", 0.762, "C3C7D4"], ["r = 32", 0.697, HEX.accent3], ["r = 32, s = 10", 0.766, "C3C7D4"],
-      ["lr 5e-5", 0.793, HEX.accent1], ["Top 8 layers", 0.749, "C3C7D4"], ["Top 16 layers", 0.760, "C3C7D4"]] });
-  // Keynote 只给纵轴标签留约 13 个字符宽，标签要短；默认配置的含义写在下面
-  text(s, "Default = r 16, lr 1e-4, all 28 layers", 0.5, 5.0, 5.8, 0.22, { fontSize: 9.5, color: C.accent5 });
-  const finds = [[Lu.LuGauge, C.accent1, "lr 5e-5 is best", "all 3 seeds beat the default"],
-    [Lu.LuLayers, C.accent3, "r = 32 is worse", "fixed by halving the scale"],
-    [Lu.LuTimer, C.accent2, "Top 8 layers", "same quality, half the time"]];
-  for (let i = 0; i < finds.length; i++) {
-    const [Ic, col, head, body] = finds[i];
-    const y = 1.3 + i * 1.12;
-    await iconCircle(s, Ic, 6.6, y, 0.55, col);
-    text(s, head, 7.3, y + 0.02, 2.2, 0.28, { fontSize: 14, bold: true, color: C.text1 });
-    text(s, body, 7.3, y + 0.3, 2.2, 0.3, { fontSize: 11.5, color: C.text2 });
-  }
-  text(s, "Seed noise ≈ 0.02", 6.6, 4.65, 2.9, 0.3, { fontSize: 11, italic: true, color: C.accent5 });
-  notes(s, 5);
-
-  // ============ 7. 结果 ============
-  pres.addSection({ title: "Results" });
-  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Results" });
-  s.addText(SPEECH[6].title, { placeholder: "title" });
-  charts.push({ slide: 7, kind: "col", x: 0.4, y: 1.1, w: 4.5, h: 2.95, title: "Test set (262 reviews)", min: 0, max: 1,
-    major: 0.25, rows: [["Base 1.7B", 0.513, "C3C7D4"], ["LoRA default", 0.734, "9DB0F0"], ["LoRA tuned", 0.801, HEX.accent4]] });
-  charts.push({ slide: 7, kind: "col", x: 5.1, y: 1.1, w: 4.5, h: 2.95, title: "Human labels (100 new reviews)", min: 0, max: 1,
-    major: 0.25, rows: [["Base 1.7B", 0.458, "C3C7D4"], ["Student 1.7B", 0.701, HEX.accent4], ["Teacher 30B", 0.689, HEX.accent1]] });
-  text(s, "Aspect-F1 · tuned = mean of 3 seeds", 0.5, 4.07, 4.4, 0.3, { fontSize: 10.5, color: C.accent5, align: "center" });
-  text(s, "Student vs teacher: no significant difference", 5.2, 4.07, 4.4, 0.3, { fontSize: 10.5, color: C.accent5, align: "center" });
-  [["5×", "less memory"], ["1.8×", "faster"], ["0.59", "few-shot only"]].forEach(([big, small], i) => {
-    const x = 0.5 + i * 3.05;
-    card(s, x, 4.5, 2.9, 0.58, { name: "strip " + big });
-    text(s, [{ text: big + "  ", options: { bold: true, fontSize: 18, color: i === 2 ? HEX.accent3 : HEX.accent4,
-      fontFace: THEME.headFontFace } }, { text: small, options: { fontSize: 12, color: HEX.dk1 } }],
-    x, 4.5, 2.9, 0.58, { align: "center", valign: "middle" });
-  });
-  notes(s, 6);
-
-  // ============ 8. 演示 ============
+  // ============ 6. 演示 ============
   pres.addSection({ title: "Demo" });
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Demo" });
-  s.addText(SPEECH[7].title, { placeholder: "title" });
+  s.addText(SPEECH[5].title, { placeholder: "title" });
   // 截图的宽高比从文件读，截图换了不用改代码；maxH 限制高度（超了就按比例缩小、水平居中）
   const R = {};
   for (const f of ["compare_done.png", "report_kpis.png", "report_chart.png"]) {
@@ -338,6 +297,48 @@ async function main() {
     underline: { style: "sng" }, color: HEX.accent4 } }], 0.55, 4.82, 5.5, 0.3, { fontSize: 12, objectName: "offline demo link" });
   const kpiBottom = img("report_kpis.png", 6.4, 1.2, 3.1, "Product report: KPIs and top aspects");
   img("report_chart.png", 6.4, kpiBottom + 0.2, 3.1, "Product report: aspects mentioned, by sentiment", 4.95 - kpiBottom - 0.2);
+  notes(s, 5);
+
+  // ============ 7. 调参 ============
+  pres.addSection({ title: "Tuning" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Tuning" });
+  s.addText(SPEECH[6].title, { placeholder: "title" });
+  charts.push({ slide: 7, kind: "bar", x: 0.35, y: 1.05, w: 6.0, h: 3.9, title: "Validation aspect-F1 (142 reviews)",
+    min: 0.65, max: 0.82, major: 0.05, rows: [["Default", 0.758, "1F2330"], ["r = 4", 0.780, "C3C7D4"],
+      ["r = 8", 0.762, "C3C7D4"], ["r = 32", 0.697, HEX.accent3], ["r = 32, s = 10", 0.766, "C3C7D4"],
+      ["lr 5e-5", 0.793, HEX.accent1], ["Top 8 layers", 0.749, "C3C7D4"], ["Top 16 layers", 0.760, "C3C7D4"]] });
+  // Keynote 只给纵轴标签留约 13 个字符宽，标签要短；默认配置的含义写在下面
+  text(s, "Default = r 16, lr 1e-4, all 28 layers", 0.5, 5.0, 5.8, 0.22, { fontSize: 9.5, color: C.accent5 });
+  const finds = [[Lu.LuGauge, C.accent1, "lr 5e-5 is best", "all 3 seeds beat the default"],
+    [Lu.LuLayers, C.accent3, "r = 32 is worse", "fixed by halving the scale"],
+    [Lu.LuTimer, C.accent2, "Top 8 layers", "same quality, half the time"]];
+  for (let i = 0; i < finds.length; i++) {
+    const [Ic, col, head, body] = finds[i];
+    const y = 1.3 + i * 1.12;
+    await iconCircle(s, Ic, 6.6, y, 0.55, col);
+    text(s, head, 7.3, y + 0.02, 2.2, 0.28, { fontSize: 14, bold: true, color: C.text1 });
+    text(s, body, 7.3, y + 0.3, 2.2, 0.3, { fontSize: 11.5, color: C.text2 });
+  }
+  text(s, "Seed noise ≈ 0.02", 6.6, 4.65, 2.9, 0.3, { fontSize: 11, italic: true, color: C.accent5 });
+  notes(s, 6);
+
+  // ============ 8. 结果 ============
+  pres.addSection({ title: "Results" });
+  s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "Results" });
+  s.addText(SPEECH[7].title, { placeholder: "title" });
+  charts.push({ slide: 8, kind: "col", x: 0.4, y: 1.1, w: 4.5, h: 2.95, title: "Test set (262 reviews)", min: 0, max: 1,
+    major: 0.25, rows: [["Base 1.7B", 0.513, "C3C7D4"], ["LoRA default", 0.734, "9DB0F0"], ["LoRA tuned", 0.801, HEX.accent4]] });
+  charts.push({ slide: 8, kind: "col", x: 5.1, y: 1.1, w: 4.5, h: 2.95, title: "Human labels (100 new reviews)", min: 0, max: 1,
+    major: 0.25, rows: [["Base 1.7B", 0.458, "C3C7D4"], ["Student 1.7B", 0.701, HEX.accent4], ["Teacher 30B", 0.689, HEX.accent1]] });
+  text(s, "Aspect-F1 · tuned = mean of 3 seeds", 0.5, 4.07, 4.4, 0.3, { fontSize: 10.5, color: C.accent5, align: "center" });
+  text(s, "Student vs teacher: no significant difference", 5.2, 4.07, 4.4, 0.3, { fontSize: 10.5, color: C.accent5, align: "center" });
+  [["5×", "less memory"], ["1.8×", "faster"], ["0.59", "few-shot only"]].forEach(([big, small], i) => {
+    const x = 0.5 + i * 3.05;
+    card(s, x, 4.5, 2.9, 0.58, { name: "strip " + big });
+    text(s, [{ text: big + "  ", options: { bold: true, fontSize: 18, color: i === 2 ? HEX.accent3 : HEX.accent4,
+      fontFace: THEME.headFontFace } }, { text: small, options: { fontSize: 12, color: HEX.dk1 } }],
+    x, 4.5, 2.9, 0.58, { align: "center", valign: "middle" });
+  });
   notes(s, 7);
 
   // ============ 9. 结论 ============

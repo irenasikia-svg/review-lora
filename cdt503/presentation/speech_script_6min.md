@@ -1,10 +1,10 @@
 # 讲稿：Beyond Star Ratings（6 分钟版）
 
-Han Daiyuan：第 1–5 页，约 3:05。Li Mingtai：第 6–9 页，约 3:10。全程约 6:15。
+Han Daiyuan：第 1–6 页，约 4:10。Li Mingtai：第 7–9 页，约 2:05。全程约 6:15。
 
 每页先是整段英文，再是整段中文。问答准备在最后（每题标了主答人）；完整的 22 题见 qa_prep.md。
 
-## 第一部分：Han Daiyuan（第 1–5 页，约 3:05）
+## 第一部分：Han Daiyuan（第 1–6 页，约 4:10）
 
 ### 第 1 页 · Beyond Star Ratings（约 0:20）
 
@@ -32,29 +32,29 @@ The teacher is Qwen3-30B, a mixture-of-experts model with 30 billion parameters,
 
 ### 第 5 页 · LoRA: train 1% of the weights（约 0:40）
 
-We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent. Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Li Mingtai will now explain the tuning and the results.
+We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent. Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Now let me show you what it can do.
 
-> 我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。接下来由 Li Mingtai 介绍调参和结果。
+> 我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。下面我来现场演示它能做什么。
 
-## 第二部分：Li Mingtai（第 6–9 页，约 3:10）
+### 第 6 页 · Live demo（约 1:05）
 
-### 第 6 页 · Tuning: the learning rate matters most（约 0:45）
+This is running live. The same model answers twice. Without our adapter, it invents an aspect, flavour, which is not on our list. With the adapter, we get Taste and Price, both positive. And this is the report for 150 hotel reviews: 53 percent positive, and the top complaints are rooms and service. Scan the QR code to try it. Li Mingtai will now explain the tuning and the results.
+
+> 这是实时运行的。同一个模型回答两次。不带适配器时，它自己编了一个方面叫“味道”，不在我们的清单里。带上适配器，得到的是口味和价格，都是好评。这是 150 条酒店评论的报告：53% 是好评，差评最多的是房间和服务。扫二维码就可以自己试。接下来由 Li Mingtai 介绍调参和结果。
+
+## 第二部分：Li Mingtai（第 7–9 页，约 2:05）
+
+### 第 7 页 · Tuning: the learning rate matters most（约 0:45）
 
 Thank you, Han. We tuned one setting at a time on the validation set. A different random seed moves the score by about 0.02, so we only trust bigger gaps. The learning rate matters most: 5e-5 gave the best score, and all three of its seeds beat the default. A bigger rank was worse, because in MLX it also makes the update bigger. And training only the top eight layers halves the time.
 
 > 谢谢 Han。我们每次只改一个设置，只看验证集。换一个随机种子分数会变动约 0.02，所以只相信比这更大的差距。学习率最重要：5e-5 得分最高，而且三个种子都超过了默认配置。rank 越大反而越差，因为在 MLX 里 rank 变大，更新幅度也变大。另外，只训练最上面 8 层，时间减半。
 
-### 第 7 页 · Near-teacher quality, a fifth of the memory（约 0:40）
+### 第 8 页 · Near-teacher quality, a fifth of the memory（约 0:40）
 
-On the test set, the score rises from 0.51 for the base model to 0.80 after tuning. On 100 new reviews that Han and I labelled ourselves, our student scores 0.70 and the teacher 0.69. Statistically, they are the same, but the student needs a fifth of the memory. Now, let me show you.
+On the test set, the score rises from 0.51 for the base model to 0.80 after tuning. On 100 new reviews that Han and I labelled ourselves, our student scores 0.70 and the teacher 0.69. Statistically, they are the same, but the student needs a fifth of the memory.
 
-> 在测试集上，分数从原始模型的 0.51 提高到调参后的 0.80。在我和 Han 自己标注的 100 条新评论上，学生模型 0.70，老师模型 0.69，统计上没有差别，但学生模型只需要五分之一的内存。下面我来现场演示。
-
-### 第 8 页 · Live demo（约 1:05）
-
-This is running live. The same model answers twice. Without our adapter, it invents an aspect, flavour, which is not on our list. With the adapter, we get Taste and Price, both positive. And this is the report for 150 hotel reviews: 53 percent positive, and the top complaints are rooms and service. Scan the QR code to try it.
-
-> 这是实时运行的。同一个模型回答两次。不带适配器时，它自己编了一个方面叫“味道”，不在我们的清单里。带上适配器，得到的是口味和价格，都是好评。这是 150 条酒店评论的报告：53% 是好评，差评最多的是房间和服务。扫二维码就可以自己试。
+> 在测试集上，分数从原始模型的 0.51 提高到调参后的 0.80。在我和 Han 自己标注的 100 条新评论上，学生模型 0.70，老师模型 0.69，统计上没有差别，但学生模型只需要五分之一的内存。
 
 ### 第 9 页 · What we learned（约 0:40）
 

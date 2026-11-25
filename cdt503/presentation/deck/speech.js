@@ -1,6 +1,6 @@
 // 讲稿（8 分钟版）：按 PPT 页码，一页一段，英文和中文一句对一句。
-// 分工：Han Daiyuan 讲第 1–5 页（问题、数据、蒸馏、系统、LoRA，对应报告第 I–II 节），
-//       Li Mingtai 讲第 6–9 页（调参、结果、演示、总结，对应报告第 III–IV 节）。中间只交接一次（第 5 页结尾）。
+// 分工：Han Daiyuan 讲第 1–6 页（问题、数据、蒸馏、系统、LoRA、现场演示），
+//       Li Mingtai 讲第 7–9 页（调参、结果、总结）。中间只交接一次（第 6 页演示结尾）。
 // PPT 的演讲者备注和讲稿文档（speech_script*.md）都从这里生成，改一处两边同步。
 const HAN = "Han Daiyuan", LI = "Li Mingtai";
 
@@ -59,11 +59,26 @@ module.exports = [
     title: "LoRA: train 1% of the weights", speaker: HAN, time: "0:40",
     say: [
       "How can a laptop train the student? Training all 1.7 billion weights would not fit. LoRA freezes the original weights, W-zero, and adds two small matrices, A and B. Only these two are trained.",
-      "That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Next, Li Mingtai will show how we tuned it and what we found.",
+      "That is about one percent of the weights, a 70-megabyte file, and about an hour and a half of training. Now let me show you what it can do.",
     ],
     zh: [
       "一台笔记本怎么训练学生模型？17 亿个权重全部训练是放不下的。LoRA 把原来的权重 W0 冻结，在旁边加两个小矩阵 A 和 B，只训练这两个。",
-      "这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。接下来由 Li Mingtai 介绍我们怎么调参，以及得到了什么结果。",
+      "这只占全部权重的 1% 左右，是一个 70 MB 的文件，训练大约一个半小时。下面我来现场演示它能做什么。",
+    ],
+  },
+  {
+    title: "Live demo", speaker: HAN, time: "1:20",
+    say: [
+      "This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it.",
+      "A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive.",
+      "And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service.",
+      "You can try it yourself. Just scan the QR code. Next, Li Mingtai will show how we tuned it and how well it works.",
+    ],
+    zh: [
+      "这是在这台笔记本上实时运行的。同一个模型回答两次：左边不带我们的适配器，右边带上。",
+      "这位顾客说水果很好、又便宜。原始模型自己编了一个方面叫“味道”，不在我们的清单里。加上适配器之后，得到的是口味和价格，都是好评。",
+      "这是店主看到的 150 条酒店评论的报告。53% 是好评，和星级评分很接近，差评最多的是房间和服务。",
+      "大家也可以自己试，扫这个二维码就行。接下来由 Li Mingtai 介绍我们怎么调参，以及效果怎么样。",
     ],
   },
   {
@@ -82,31 +97,16 @@ module.exports = [
     ],
   },
   {
-    title: "Near-teacher quality, a fifth of the memory", speaker: LI, time: "0:55",
+    title: "Near-teacher quality, a fifth of the memory", speaker: LI, time: "0:50",
     say: [
       "Here are the results. On 262 test reviews, the base model scores 0.51. LoRA with default settings scores 0.73, and the tuned model 0.80, averaged over three seeds. Almost every output is now valid JSON.",
       "On the right is a harder test: 100 new reviews that Han and I labelled ourselves. Our student scores 0.70, and the thirty-billion-parameter teacher 0.69. Statistically, they are the same.",
-      "But the student needs about a fifth of the memory, and it is almost twice as fast. Just giving the base model examples only reaches 0.59. Now, let me show you.",
+      "But the student needs about a fifth of the memory, and it is almost twice as fast. Just giving the base model examples only reaches 0.59.",
     ],
     zh: [
       "这是结果。在 262 条测试评论上，原始模型得分 0.51，默认设置的 LoRA 是 0.73，调参后的模型是 0.80，这是三个种子的平均。现在几乎每条输出都是合格的 JSON。",
       "右边是更难的测试：我和 Han 自己标注的 100 条新评论。学生模型得分 0.70，300 亿参数的老师模型是 0.69，统计上没有差别。",
-      "但学生模型只需要大约五分之一的内存，速度快将近一倍。只给原始模型看几个示例，最多只能到 0.59。下面我来现场演示。",
-    ],
-  },
-  {
-    title: "Live demo", speaker: LI, time: "1:15",
-    say: [
-      "This is running live on this laptop. The same model answers twice: on the left without our adapter, on the right with it.",
-      "A customer says the fruit is great and cheap. The base model invents its own aspect, flavour, which is not on our list. With our adapter, we get Taste and Price, both positive.",
-      "And this is the report a shop owner would see for 150 hotel reviews. 53 percent are positive, close to the star ratings, and the top complaints are rooms and service.",
-      "You can try it yourself. Just scan the QR code.",
-    ],
-    zh: [
-      "这是在这台笔记本上实时运行的。同一个模型回答两次：左边不带我们的适配器，右边带上。",
-      "这位顾客说水果很好、又便宜。原始模型自己编了一个方面叫“味道”，不在我们的清单里。加上适配器之后，得到的是口味和价格，都是好评。",
-      "这是店主看到的 150 条酒店评论的报告。53% 是好评，和星级评分很接近，差评最多的是房间和服务。",
-      "大家也可以自己试，扫这个二维码就行。",
+      "但学生模型只需要大约五分之一的内存，速度快将近一倍。只给原始模型看几个示例，最多只能到 0.59。",
     ],
   },
   {

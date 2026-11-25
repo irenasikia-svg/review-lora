@@ -1,5 +1,5 @@
 // 讲稿（6 分钟版）：同一套 9 页 PPT，页标题沿用 speech.js（8 分钟版），要说的话缩短。英文和中文一句对一句。
-// 分工和 8 分钟版一样：Han Daiyuan 第 1–5 页，Li Mingtai 第 6–9 页，第 5 页结尾交接一次。
+// 分工和 8 分钟版一样：Han Daiyuan 第 1–6 页（含现场演示），Li Mingtai 第 7–9 页，第 6 页结尾交接一次。
 // 语速和 8 分钟版一样慢，省下的时间来自删内容，不是说得更快。
 const FULL = require("./speech.js");
 
@@ -56,11 +56,24 @@ const SHORT = [
     time: "0:40",
     say: [
       "We fine-tuned the student with LoRA, using Apple's MLX on one M5 laptop with 32 gigabytes of memory. LoRA freezes the original weights and adds small trainable matrices to all 28 layers: 17 million weights, about one percent.",
-      "Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Li Mingtai will now explain the tuning and the results.",
+      "Training runs 480 steps, about two passes over the data, in an hour and a half, and we keep the checkpoint with the lowest validation loss. Now let me show you what it can do.",
     ],
     zh: [
       "我们用 LoRA 微调学生模型，用的是苹果的 MLX 框架，在一台 32 GB 内存的 M5 笔记本上完成。LoRA 把原来的权重冻结，在全部 28 层上加一些可以训练的小矩阵，一共 1,700 万个权重，大约占 1%。",
-      "训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。接下来由 Li Mingtai 介绍调参和结果。",
+      "训练跑 480 步，大约把数据过两遍，用时一个半小时，最后保留验证损失最低的那个检查点。下面我来现场演示它能做什么。",
+    ],
+  },
+  {
+    time: "1:05",
+    say: [
+      "This is running live. The same model answers twice. Without our adapter, it invents an aspect, flavour, which is not on our list. With the adapter, we get Taste and Price, both positive.",
+      "And this is the report for 150 hotel reviews: 53 percent positive, and the top complaints are rooms and service.",
+      "Scan the QR code to try it. Li Mingtai will now explain the tuning and the results.",
+    ],
+    zh: [
+      "这是实时运行的。同一个模型回答两次。不带适配器时，它自己编了一个方面叫“味道”，不在我们的清单里。带上适配器，得到的是口味和价格，都是好评。",
+      "这是 150 条酒店评论的报告：53% 是好评，差评最多的是房间和服务。",
+      "扫二维码就可以自己试。接下来由 Li Mingtai 介绍调参和结果。",
     ],
   },
   {
@@ -78,24 +91,11 @@ const SHORT = [
     time: "0:40",
     say: [
       "On the test set, the score rises from 0.51 for the base model to 0.80 after tuning.",
-      "On 100 new reviews that Han and I labelled ourselves, our student scores 0.70 and the teacher 0.69. Statistically, they are the same, but the student needs a fifth of the memory. Now, let me show you.",
+      "On 100 new reviews that Han and I labelled ourselves, our student scores 0.70 and the teacher 0.69. Statistically, they are the same, but the student needs a fifth of the memory.",
     ],
     zh: [
       "在测试集上，分数从原始模型的 0.51 提高到调参后的 0.80。",
-      "在我和 Han 自己标注的 100 条新评论上，学生模型 0.70，老师模型 0.69，统计上没有差别，但学生模型只需要五分之一的内存。下面我来现场演示。",
-    ],
-  },
-  {
-    time: "1:05",
-    say: [
-      "This is running live. The same model answers twice. Without our adapter, it invents an aspect, flavour, which is not on our list. With the adapter, we get Taste and Price, both positive.",
-      "And this is the report for 150 hotel reviews: 53 percent positive, and the top complaints are rooms and service.",
-      "Scan the QR code to try it.",
-    ],
-    zh: [
-      "这是实时运行的。同一个模型回答两次。不带适配器时，它自己编了一个方面叫“味道”，不在我们的清单里。带上适配器，得到的是口味和价格，都是好评。",
-      "这是 150 条酒店评论的报告：53% 是好评，差评最多的是房间和服务。",
-      "扫二维码就可以自己试。",
+      "在我和 Han 自己标注的 100 条新评论上，学生模型 0.70，老师模型 0.69，统计上没有差别，但学生模型只需要五分之一的内存。",
     ],
   },
   {
