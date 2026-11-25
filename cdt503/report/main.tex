@@ -1,7 +1,9 @@
-% CDT503 期末项目报告。编译：在 cdt503/report 下运行 tectonic main.tex（或在 TeXPage 上用 pdfLaTeX）。
+% CDT503 期末项目报告。编译：在 cdt503/report 下运行 tectonic main.tex（或在 TeXPage 上把编译器设为 XeLaTeX）。
+% 格式按老师的模板：IEEEtran journal 模式，作者写“英文名 (中文名)”，用 ctex 排中文名，所以要用 XeLaTeX 编译。
 % 图片默认从 ../figures/ 读取；上传到 TeXPage 时把 figures 文件夹放在 main.tex 旁边也可以（见 \graphicspath）。
-\documentclass[conference]{IEEEtran}
-\usepackage[T1]{fontenc}
+\documentclass[journal]{IEEEtran}
+\usepackage[scheme=plain,fontset=fandol]{ctex}  % fandol 字体 TeX Live 自带，本机和 TeXPage 都能编译
+\usepackage{newtxtext}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -19,9 +21,9 @@
 
 \title{Beyond Star Ratings:\\Aspect Extraction from Chinese Reviews}
 
-\author{\IEEEauthorblockN{Han Daiyuan (3231363) \qquad Li Mingtai (3231959)}
-\IEEEauthorblockA{CDT503 Final Group Project (Track B: NLP / PEFT)\\
-Lingnan University, Hong Kong}}
+\author{Han Daiyuan (韩戴源), Li Mingtai (李明泰)%
+\thanks{Han Daiyuan (3231363) and Li Mingtai (3231959) are with Lingnan University, Hong Kong.
+CDT503 Final Group Project, Track B: NLP / PEFT.}}
 
 \maketitle
 

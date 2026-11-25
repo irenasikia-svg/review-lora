@@ -10,7 +10,7 @@ IEEEtran 会议格式，英文，目前 6 页（要求 4–6 页；第 6 页右�
 cd ~/claude/review-lora/cdt503/report && tectonic main.tex
 ```
 
-上传 TeXPage：先打包，再把 `texpage.zip` 上传成新项目，编译器选 pdfLaTeX 或 XeLaTeX 都可以：
+上传 TeXPage：先打包，再把 `texpage.zip` 上传成新项目，编译器必须选 XeLaTeX（作者行有中文名，用了 ctex）：
 
 ```bash
 sh ~/claude/review-lora/cdt503/report/make_texpage_zip.sh
